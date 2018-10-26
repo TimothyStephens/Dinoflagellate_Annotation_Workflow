@@ -263,7 +263,7 @@ qsub run_BLAST.sh
 cat FASTA_SPLIT/*.outfmt6 > blastp.outfmt6
 cat blastp.outfmt6 | awk '{if ((($8-$7+1) / $13) > 0.8) {print $1}}' | sort | uniq | wc -l
 
-cat blastp.outfmt6 | awk '{if ((($8-$7+1) / $13) > 0.8) {print $1}}' | sort | uniq | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_coverage.faa
+cat blastp.outfmt6 | awk '{if ((($8-$7+1) / $13) > 0.8) {print $1}}' | sort | uniq | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa
 
 
 
@@ -288,21 +288,21 @@ qsub run_HHBLITS.sh
 
 # Check what errors occured.
 # Expect: "WARNING: ignoring invalid symbol '*' at pos."
-cat SEQS_SPLIT/*.stderr
-cat SEQS_SPLIT/*.stderr | sed '/^$/d' |  wc -l
-cat SEQS_SPLIT/*.stderr | sed '/^$/d' |  grep -c 'WARNING: ignoring invalid symbol'
+cat FASTA_SPLIT/*.stderr
+cat FASTA_SPLIT/*.stderr | sed '/^$/d' |  wc -l
+cat FASTA_SPLIT/*.stderr | sed '/^$/d' |  grep -c 'WARNING: ignoring invalid symbol'
 
 # Get sequence ids which have at least 1 transposon hit. 
 # Looks for 'No. 1' which is in front of first alignment. i.e. seq has transposon hit. 
-for f in `grep -l "No 1" SEQS_SPLIT/*.part-*.hhr`; do cat $f | awk 'NR==1{print $2}'; done > HHBLITS.hit.seq.ids
+for f in `grep -l "No 1" FASTA_SPLIT/*.part-*.hhr`; do cat $f | awk 'NR==1{print $2}'; done > HHBLITS.hit.seq.ids
 
 ## For large number of files.
-# for F in SEQS_SPLIT/*.part-*.hhr; do grep -l "No 1" $F; done | xargs -I '{}' grep '^Query         ' {} | awk '{print $2}' > HHBLITS.hit.seq.ids 
+# for F in FASTA_SPLIT/*.part-*.hhr; do grep -l "No 1" $F; done | xargs -I '{}' grep '^Query         ' {} | awk '{print $2}' > HHBLITS.hit.seq.ids 
 
 # 'HHBLITS.hit.seq.ids' has seq names which have transposon hits. 
-	
+
 ## Clean Up. 
-rm -r SEQS_SPLIT/
+rm -r FASTA_SPLIT/
 
 
 #############################################
@@ -312,10 +312,7 @@ rm -r SEQS_SPLIT/
 ## 
 ## 
 
-# Run TransposonPSI
-export SEQ=(*.pep.bin_*.faa)
-export PATH=$PATH:/Users/timothy.stephens/Programs/blast-2.2.26/bin
-/Users/timothy.stephens/Programs/TransposonPSI_08222010/transposonPSI.pl ${SEQ} prot > transposonPSI.log 2>&1
+qsub run_TransposonPSI.sh
 
 #### Run Locally CladeC1
 ## cpus=1
@@ -337,17 +334,16 @@ cat *.TPSI.allHits | awk '{ print $5 }' | sort | uniq > TransposonPSI.hit.seq.id
 ## 
 ## 
 
-ln -s ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep .
-
 # Filter IDs
 
 # Get seq IDs that do NOT HAVE Transposon_PSI, HHBLITS Hits and are NOT Single Exon. 
 # This script removes IDs which are in the HHBLITs, Transposon-PSI and Single Exon files. 
-python $SCRIPTS/filter_ids.py -i blastx.outfmt6.hist.list.top_bins.ids -o blastx.outfmt6.hist.list.top_bins.ids.filtered_final -r ../HHBLITS/HHBLITS.hit.seq.ids,../TRANSPOSON_PSI/TransposonPSI.hit.seq.ids
+grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa | sed -e 's/>//' > Seqs_from_blast.ids
+python $SCRIPTS/filter_ids.py -i Seqs_from_blast.ids -o Seqs_from_blast.ids.filtered -r ../HHBLITS/HHBLITS.hit.seq.ids,../TRANSPOSON_PSI/TransposonPSI.hit.seq.ids
 
 #Cluster Proteins at 75%
 # Get peptide sequences which do not have transposon hits. 
-cat blastx.outfmt6.hist.list.top_bins.ids.filtered_final | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.filtered_final
+xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa < Seqs_from_blast.ids.filtered > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.final.faa
 
 #### Recommend C1
 ## cpus=24
@@ -359,10 +355,10 @@ cat blastx.outfmt6.hist.list.top_bins.ids.filtered_final | xargs ${SAMTOOLS}/sam
 ## Walltime=00:00:04
 
 # File containing protein seqs which are representative of each cluster. 
-*.filtered_final.cdhit75
+# *.filtered_final.cdhit75
 
 # Get Seq headers for representative proteins. 
-grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.filtered_final.cdhit75 | sed -e 's/>//' > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.filtered_final.cdhit75.ids
+grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.final.faa.cdhit75 | sed -e 's/>//' > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.final.faa.cdhit75.ids
 
 
 #############################################

@@ -242,7 +242,7 @@ if [ $cmd == "hhblits" ] || [ $cmd == "all" ]; then
 	cd HHBLITS/
 	
 	# Link data
-	ln -s ../BLAST2DB/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_bins.faa .
+	ln -s ../BLAST2DB/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa .
 	
 	# Construct submission script
 	cat $SRC/PBS_header.sh ${SRC}/HHBLITS.sh | sed \
@@ -268,7 +268,7 @@ if [ $cmd == "transposonpsi" ] || [ $cmd == "all" ]; then
         cd TRANSPOSON_PSI/
 
         # Link data
-	ln -s ../BLAST2DB/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_bins.faa .
+	ln -s ../BLAST2DB/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa .
 	
         # Construct submission script
 	cat $SRC/PBS_header.sh ${SRC}/TransposonPSI.sh | sed \
@@ -293,7 +293,7 @@ if [ $cmd == "cdhits" ] || [ $cmd == "all" ]; then
         cd CDHITS/
 
         # Link data
-        #ln -s  
+	ln -s ../BLAST2DB/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa .
 
         # Construct submission script
 	cat $SRC/PBS_header.sh ${SRC}/CD_HIT.sh | sed \
@@ -302,7 +302,7 @@ if [ $cmd == "cdhits" ] || [ $cmd == "all" ]; then
                 -e "s/__MEM__/8GB/" \
                 -e "s/__VMEM__/8GB/" \
                 -e "s/__WALLTIME__/1:00:00/" \
-		-e "s/__CDHITS_MEM__/8000/" > run_CD_HIT.sh
+		-e "s/@CDHITS_MEM@/8000/" > run_CD_HIT.sh
 	
         cd ../
 	echo "... done!"
@@ -322,7 +322,7 @@ if [ $cmd == "goldengenes" ] || [ $cmd == "all" ]; then
         # Link data
         ln -s ../REPEAT_ANALYSIS/${GENOME_NAME}.masked .
 	ln -s ../REPEAT_ANALYSIS/${GENOME_NAME}.softmasked .
-	ln -s ../CDHITS/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.filtered_final.cdhit75.ids CD-HIT.ids.txt
+	ln -s ../CDHITS/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.final.faa.cdhit75.ids CD-HIT.ids.txt
 
         # Construct submission script
 	cat $SRC/PBS_header.sh ${SRC}/GoldenGenes.sh | sed \

@@ -1,7 +1,7 @@
 source ../env.sh
 
-mkdir SEQS_SPLIT
-run_cmd "perl $SCRIPTS/fasta-splitter.pl --part-size 1 --measure seq --out-dir SEQS_SPLIT ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_bins.faa"
+mkdir FASTA_SPLIT
+run_cmd "perl $SCRIPTS/fasta-splitter.pl --part-size 1 --measure seq --out-dir FASTA_SPLIT ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa"
 
 ## Run hhblits using a transposon database
 # 
@@ -13,7 +13,7 @@ run_cmd "perl $SCRIPTS/fasta-splitter.pl --part-size 1 --measure seq --out-dir S
 # -B <int>       maximum number of alignments in alignment list (default=500)
 # -Z <int>       maximum number of lines in summary hit list (default=500)
 # 
-for var in SEQS_SPLIT/*.faa; 
+for var in FASTA_SPLIT/*.faa;
 do 
 	echo "${HHSUITE}/hhblits -cpu 1 -p 80 -e 1E-5 -E 1E-5 -z 0 -b 0 -B 3 -Z 3 -i ${var} -d ${TRANSPOSON_DB_HHBLITS} -o ${var}.hhr -n 1 1> ${var}.stdout 2> ${var}.stderr"; 
 done > hhblits.commands
