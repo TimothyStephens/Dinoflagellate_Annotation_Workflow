@@ -1,0 +1,7 @@
+# start of example 3' splice data
+# A C G T
+100   0   0   0
+  0   0 100   0
+splice
+ 1  1  97  1
+# end of example 3' splice data
