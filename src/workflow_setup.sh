@@ -31,7 +31,7 @@ cmd=$1
 if [ $# -ne 1 ] || [ $1 == '-h' ] || [ $1 == '--help' ]; then
         echo; echo "Usage: $(basename $0) <command>"
         echo "command: command to be run. Options: all, trinitygg, 
-		trinitydn, seqclean, pasa, blastx, 
+		trinitydn, seqclean, pasa, blast2db, 
 		repeats, hhblits, transposonpsi, 
 		cdhits, goldengenes, genemark, 
 		snap, augustus, maker_protein, 
@@ -180,26 +180,25 @@ fi
 
 
 #############################################
-## Set up BLASTX
+## Set up BLAST2DB
 #############################################
-if [ $cmd == "blastx" ] || [ $cmd == "all" ]; then
-	echo; echo "Setting up BLASTX"
+if [ $cmd == "blast2db" ] || [ $cmd == "all" ]; then
+	echo; echo "Setting up BLAST2DB"
 
-        mkdir BLASTX
-        cd BLASTX/
+        mkdir BLAST2DB
+        cd BLAST2DB/
 
         # Link data
-        ln -s ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds .
 	ln -s ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep .
 	
         # Construct submission script
-	cat $SRC/PBS_array_header.sh ${SRC}/BLASTX_Batch.sh | sed \
-		-e "s/__JOB_NAME__/${PREFIX}_BLASTX/" \
+	cat $SRC/PBS_array_header.sh ${SRC}/BLAST_Batch.sh | sed \
+		-e "s/__JOB_NAME__/${PREFIX}_BLAST/" \
                 -e "s/__NCPUS__/8/" \
                 -e "s/__MEM__/24GB/" \
                 -e "s/__VMEM__/24GB/" \
                 -e "s/__WALLTIME__/168:00:00/" \
-		-e 's/__ARRAYSIZE__/50/' > run_BLASTX.sh
+		-e 's/__ARRAYSIZE__/50/' > run_BLAST.sh
 	
         cd ../
 	echo "... done!"
@@ -243,7 +242,7 @@ if [ $cmd == "hhblits" ] || [ $cmd == "all" ]; then
 	cd HHBLITS/
 	
 	# Link data
-	ln -s ../BLASTX/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_bins.faa .
+	ln -s ../BLAST2DB/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_bins.faa .
 	
 	# Construct submission script
 	cat $SRC/PBS_header.sh ${SRC}/HHBLITS.sh | sed \
@@ -269,7 +268,7 @@ if [ $cmd == "transposonpsi" ] || [ $cmd == "all" ]; then
         cd TRANSPOSON_PSI/
 
         # Link data
-	ln -s ../BLASTX/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_bins.faa .
+	ln -s ../BLAST2DB/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_bins.faa .
 	
         # Construct submission script
 	cat $SRC/PBS_header.sh ${SRC}/TransposonPSI.sh | sed \

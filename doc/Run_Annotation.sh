@@ -217,38 +217,34 @@ qsub run_PASA.sh
 
 
 #############################################
-## BLASTX_Prot DB + analyze_blastPlus_topHit_coverage.pl
+## BLAST Protein DB
 #############################################
 
-#Get protein sequences which have similarity to a Protein DB. 
+# Get sequences which are type:complete. 
+grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep | grep 'type:complete' | awk '{print $1}' | sed -e 's/>//' > Complete_Sequences.ids
 
-grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds | grep 'type:complete' | awk '{print $1}' | sed -e 's/>//' > IDS.txt
-xargs $SAMTOOLS/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds < IDS.txt > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds.complete_only
-mkdir CONTIGS_SPLIT
-perl $SCRIPTS/fasta-splitter.pl --n-parts 50 --out-dir CONTIGS_SPLIT ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds.complete_only
-ls -1 CONTIGS_SPLIT/*.complete_only > files2run.txt
+# Get all seq IDs that have only  one CDS. 
+awk '$3=="CDS"{print $0}' ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.genome.gff3 | awk '{ print $9 }' | sed -e 's/.*Parent=\(.*\)/\1/' | sort | uniq -c | awk '{ if($1==1) print $2 }' > Single_CDS_Genes.ids
+
+# Get seq IDs which have coords on the genome. 
+awk '$3=="mRNA"{print $0}' ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.genome.gff3 | awk '{ print $9 }' | sed -e 's/ID=\(.*\);Parent.*/\1/' > Genes_with_genome_coords.ids
+
+# Filter IDs
+
+# Get seq IDs that are NOT Single Exon genes, have genome coords, and are type complete. 
+python $SCRIPTS/filter_ids.py -i Complete_Sequences.ids -o Complete_Sequences.ids.filtered -k Genes_with_genome_coords.ids -r Single_CDS_Genes.ids
 
 
-
-
-## TEST
-grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep | grep 'type:complete' | awk '{print $1}' | sed -e 's/>//' > IDS.txt
-xargs $SAMTOOLS/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep < IDS.txt > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only
+# Get pep sequences in filtered ID list
+xargs $SAMTOOLS/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep < Complete_Sequences.ids.filtered > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered
 mkdir FASTA_SPLIT
-perl $SCRIPTS/fasta-splitter.pl --n-parts 50 --out-dir FASTA_SPLIT ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only
-ls -1 FASTA_SPLIT/*.complete_only > files2run.txt
-
-cat FASTA_SPLIT/*.blastp.outfmt6 > blastp.outfmt6
-cat blastp.outfmt6 | awk '{if ((($8-$7+1) / $13) > 0.8) {print $1}}' | sort | uniq | wc -l
-
-cat blastp.outfmt6 | awk '{if ((($8-$7+1) / $13) > 0.8) {print $1}}' | sort | uniq | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_bins.faa
-
-
+perl $SCRIPTS/fasta-splitter.pl --n-parts 50 --out-dir FASTA_SPLIT ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered
+ls -1 FASTA_SPLIT/*.filtered > files2run.txt
 
 
 ## Submit array
 ## if you change the number of parts need to change it in the pbs script
-qsub run_BLASTX.sh
+qsub run_BLAST.sh
 
 
 #### Recommend CladeC1
@@ -262,16 +258,13 @@ qsub run_BLASTX.sh
 ## mem=<20GB each job.
 ## Walltime=00:20:46-01:48:03 each job.
 
-## Get Hit coverage for each PASA CDS processed. 
-## Script will take a while (>1hr) to run. 
-cat CONTIGS_SPLIT/*.blastx.outfmt6 > blastx.outfmt6
-##                                        
-${TRINITY}/util/analyze_blastPlus_topHit_coverage.pl blastx.outfmt6 ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds ${BLASTX_PROTEIN_DB}
 
-## Gets the peptide sequences which have >70% similarity to SwissProt + Sym proteins.
-## i.e. Bin_80, Bin_90 and Bin_100
-cat blastx.outfmt6.hist.list | awk '{ if($1 == "Bin_100" || $1 == "Bin_90" || $1 == "Bin_80") print $2 }' > blastx.outfmt6.hist.list.top_bins.ids
-cat blastx.outfmt6.hist.list.top_bins.ids | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_bins.faa
+
+cat FASTA_SPLIT/*.outfmt6 > blastp.outfmt6
+cat blastp.outfmt6 | awk '{if ((($8-$7+1) / $13) > 0.8) {print $1}}' | sort | uniq | wc -l
+
+cat blastp.outfmt6 | awk '{if ((($8-$7+1) / $13) > 0.8) {print $1}}' | sort | uniq | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.top_coverage.faa
+
 
 
 #############################################
@@ -346,17 +339,11 @@ cat *.TPSI.allHits | awk '{ print $5 }' | sort | uniq > TransposonPSI.hit.seq.id
 
 ln -s ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep .
 
-# Get all seq IDs that have only  one CDS. 
-awk '$3=="CDS"{print $0}' ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.genome.gff3 | awk '{ print $9 }' | sed -e 's/.*Parent=\(.*\)/\1/' | sort | uniq -c | awk '{ if($1==1) print $2 }' > Single_CDS_Genes.ids
-
-# Get seq IDs which have coords on the genome. 
-awk '$3=="mRNA"{print $0}' ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.genome.gff3 | awk '{ print $9 }' | sed -e 's/ID=\(.*\);Parent.*/\1/' > Genes_with_genome_coords.ids
-
-#Filter IDs
+# Filter IDs
 
 # Get seq IDs that do NOT HAVE Transposon_PSI, HHBLITS Hits and are NOT Single Exon. 
 # This script removes IDs which are in the HHBLITs, Transposon-PSI and Single Exon files. 
-python $SCRIPTS/filter_ids.py -i blastx.outfmt6.hist.list.top_bins.ids -o blastx.outfmt6.hist.list.top_bins.ids.filtered_final -k Genes_with_genome_coords.ids -r Single_CDS_Genes.ids,../HHBLITS/HHBLITS.hit.seq.ids,../TRANSPOSON_PSI/TransposonPSI.hit.seq.ids
+python $SCRIPTS/filter_ids.py -i blastx.outfmt6.hist.list.top_bins.ids -o blastx.outfmt6.hist.list.top_bins.ids.filtered_final -r ../HHBLITS/HHBLITS.hit.seq.ids,../TRANSPOSON_PSI/TransposonPSI.hit.seq.ids
 
 #Cluster Proteins at 75%
 # Get peptide sequences which do not have transposon hits. 
@@ -436,6 +423,7 @@ rm -r data/ run/ info/ output/data output/gmhmm
 ## SNAP
 #############################################
 
+# Get just the scaffolds with Golden Genes
 grep '>' final_golden_genes.gff3.nr.golden.zff | sed 's/>\(.*\)/\1/' | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}.softmasked > snap.fasta
 
 qsub run_SNAP.sh
@@ -463,7 +451,7 @@ rm -r ${GENOME_NAME}.softmasked_dir/
 ## AUGUSTUS
 #############################################
 
-qsub run_AUGUSTUS.sh
+qsub run_Augustus_Training.sh
 
 #### Recommend C1
 ## cpus=8 # Keep as 8 cpus.
