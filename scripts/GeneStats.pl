@@ -10,16 +10,16 @@ use List::MoreUtils qw (uniq);
 ##
 my $USAGE =<<USAGE;
 
-	Usage: GeneStats.pl Gene.fa Gene.gff3 Genome.fa
+	Usage: GeneStats.pl CDS.fa EVM.gff3 Genome.fa
 	
-		Gene.fa:  CDS seq of genes
-                Gene.gff3:  Gff of genes
+		CDS.fa:  CDS seq of genes
+                Gene.gff3:  Gff of genes (EVM output)
                 Genome.fa:  Genome seq
 USAGE
 #
 ######################################################
 
-print "@ARGV";
+#print "@ARGV";
 if ($#ARGV != 2 ) {
 	print "$USAGE\n";
 	exit;
@@ -32,20 +32,20 @@ my $genome = $ARGV[2]; # Genome fasta
 #Store all gene sequences in hash and get gene lengths and average
 my $seqio_obj = Bio::SeqIO->new(-file => $genes, -format => "fasta" );
 
-my @GenLn;
-my $totalGenLn = 0;
+my @CDSlen;
+my $totalCDSlen = 0;
 
 while (my $seq_obj = $seqio_obj->next_seq){
 	my $l = $seq_obj->length;
-	$totalGenLn = $totalGenLn + $l;
-	push @GenLn, $l;
+	$totalCDSlen = $totalCDSlen + $l;
+	push @CDSlen, $l;
 }
 
-my $numGen = scalar @GenLn; 
-my $avGenLn = $totalGenLn / $numGen;
+my $numCDS = scalar @CDSlen; 
+my $avCDSlen = $totalCDSlen / $numCDS;
 
-print "Number of genes:\t$numGen\n";
-print "Average gene length:\t$avGenLn\n";
+print "Number of CDS:\t$numCDS\n";
+print "Average CDS length:\t$avCDSlen\n";
 
 #Store all genome sequences in hash
 my $genomeio_obj = Bio::SeqIO->new(-file => $genome, -format => "largefasta" );
@@ -60,27 +60,18 @@ my $numSeq = keys %GNM;
 print "Number of sequences in genome:\t$numSeq\n";
 
 # Parse GFF to extract the relevant info:
-# Exons per gene
-my %GenEx;
 
-# Exons length
-my @ExLn;
+my %GenLen; # Gene (CDS + introns) length
+my %GenEx; # Exons per gene
+my @ExLn; # Exons length
+my $IntrGen = 0;# Genes with introns
+my %IntrSt; # Intron start
+my %IntrEnd; #Intron end
+my @IntrDon; # Splice donors
+my @IntrAcc; # Splice acceptors
+my @InterGenLn; # Intergenic region length
 
-# Genes with introns
-my $IntrGen = 0;
-
-# Intron length
-my %IntrSt;
-my %IntrEnd;
-
-# Intron splice donors/acceptors
-my @IntrDon;
-my @IntrAcc;
-
-# Intergenic region length
-my @InterGenLn;
-
-open(GFF, $gff) or die "Couldn't open $gff";
+open(GFF, $gff) or die "Couldn't open $gff\n";
 
 my %GenOr;
 my $scaff = '';
@@ -101,6 +92,7 @@ while(my $l = <GFF>){
 			if ($items[8] =~ m/ID\=(.+)\;Name\=/){
 				$GenID = $1;
 				$GenScaff{$GenID} = $items[0];
+				$GenLen{$GenID} = $items[4] - $items[3] + 1; 
 			}else{
 				print "Not matched found for Gene ID\n";
 			}
@@ -140,7 +132,24 @@ while(my $l = <GFF>){
 }
 close(GFF);
 
+# Get average gene length
+my $totGenLen = 0;
+
+foreach my $g (keys %GenLen){
+	chomp $g;
+	$totGenLen = $totGenLen + $GenLen{$g};
+}
+
+my $numGen = keys %GenLen;
+my $avGenLen = $totGenLen / $numGen;
+
+print "Total number of genes:\t$numGen\n";
+print "Total gene length:\t$totGenLen\n";
+print "Average gene length:\t$avGenLen\n";
+ 
 # Intergenic regions calculations
+
+my $outio_obj1 = Bio::SeqIO->new(-file => '>IntergenicRegions.fasta', -format => 'fasta');
 
 foreach my $array (values %InterGenSt){
 	@$array = sort { $a <=> $b } @$array;
@@ -160,6 +169,10 @@ foreach my $s (keys %InterGenSt){
 			$numInterGen++;
 			my $EndIndex = $StIndex + 1;
 			my $InterGenLn = $InterGenEnd{$s}[$EndIndex] - $InterGenSt{$s}[$StIndex] - 1;
+			my $actualStart = $StIndex + 1; # The other start index is actually the last position of a gene
+			my $fragment = substr $GNM{$s}, $actualStart, $InterGenLn;
+			my $frag_obj = Bio::Seq->new(-seq => "$fragment", -display_id => "${s}_${numInterGen}", -alphabet => "dna");
+			$outio_obj1->write_seq($frag_obj);
 			$TotInterGenLn = $TotInterGenLn + $InterGenLn;
 		}
 	}else{
@@ -192,6 +205,7 @@ foreach my $el (@ExLn){
 my $AvExLn = $totExLn / $totNumEx;
 
 print "Average exon length:\t$AvExLn\n";
+print "Total exon length:\t$totExLn\n";
 print "Number of genes with introns:\t$IntrGen\n";
 
 # Create a list with all uniq intron ids

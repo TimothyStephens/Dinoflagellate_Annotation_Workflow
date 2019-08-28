@@ -135,7 +135,7 @@ if [ $cmd == "seqclean" ] || [ $cmd == "all" ]; then
         # Construct submission script
 	cat $SRC/PBS_header.sh ${SRC}/SeqClean.sh | sed \
 		-e "s/__JOB_NAME__/${PREFIX}_SeqClean/" \
-                -e "s/__NCPUS__/1/" \
+                -e "s/__NCPUS__/4/" \
                 -e "s/__MEM__/24GB/" \
                 -e "s/__VMEM__/24GB/" \
                 -e "s/__WALLTIME__/4:00:00/" > run_SeqClean.sh
@@ -462,6 +462,7 @@ if [ $cmd == "maker_protein" ] || [ $cmd == "all" ]; then
                 -e "s/__MEM__/4GB/" \
                 -e "s/__VMEM__/4GB/" \
                 -e "s/__WALLTIME__/24:00:00/" > MAKER_PROTEIN_run_MAKER.sh
+	chmod +x MAKER_PROTEIN_run_MAKER.sh
 	
         cd ../
 	echo "... done!"
@@ -499,6 +500,20 @@ if [ $cmd == "evidencemodeler" ] || [ $cmd == "all" ]; then
         cd ../
 	echo "... done!"
 fi
+
+
+
+#############################################
+## Set up EvidenceModeler
+#############################################
+if [ $cmd == "evidencemodeler" ] || [ $cmd == "all" ]; then
+	echo; echo "Checking executables"
+	#echo -e "Samtools:\t" `command -v samtool || echo "Not found"`
+fi
+
+
+
+
 
 
 

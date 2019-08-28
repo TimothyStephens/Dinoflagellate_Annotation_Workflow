@@ -8,6 +8,7 @@ Programs used:
 	Bamtools v2.4.1 (any version should be fine)
 	BBmap v38.08 (any version should be fine)
 	Bedtools v2.24.0 (any version usually avalible on all systems already)
+	Blast+ (any version usually avalible on all systems already)
 	Blastall v2.2.26
 	BLAT v36x2
 	Bowtie2 v2.3.4.1
@@ -17,6 +18,7 @@ Programs used:
 	hhsuite v3.0-beta.3
 	JAMg release 01Jul2018
 	Jellyfish v2.2.10
+	maker v2.31.10
 	NSEG
 	PASA v2.3.3 (SQLite compatable)
 	RECON v1.08
@@ -32,6 +34,12 @@ Programs used:
 
 
 
+Perl Modules Required:
+	File::Util
+	Data::Dumper
+	DBD::SQLite
+	DB_File
+	Bio::SearchIO
 
 
 
@@ -43,13 +51,22 @@ Programs used:
 ## 
 wget http://bioinf.uni-greifswald.de/augustus/binaries/augustus-3.3.1.tar.gz
 tar -zxvf augustus-3.3.1.tar.gz
-cd augustus-3.3.1/
+mv augustus-3.3.1/ augustus-3.3.1-modified
+cd augustus-3.3.1-modified/
 ## Next make the changes to each script detailed in Mods_to_programs.sh
 ## 
-## Will not build anything in the auxprogs directory as they requires too many dependancys. 
+## the scripts in the auxprogs have a lot of dependencies so we can ignore them. 
 ## If you need these programs you will have to make them seperately. 
 
+## To stop the auxpregs from compiling comment out the 'cd auxprogs && ${MAKE}'
+## line from the Makefile
 make
+
+## Check it works
+./bin/etraining
+## Check the mods are present. 
+./bin/augustus --paramlist 2>&1 | grep 'allow_dss_consensus_ga'
+
 
 
 
@@ -63,6 +80,11 @@ make
 wget -O BBMap_38.08.tar.gz https://sourceforge.net/projects/bbmap/files/BBMap_38.08.tar.gz/download 
 tar -zxvf BBMap_38.08.tar.gz
 
+## Check it works
+./bbmap/stats.sh
+
+
+
 
 
 #############################################
@@ -73,7 +95,11 @@ tar -zxvf BBMap_38.08.tar.gz
 ## 
 wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/legacy.NOTSUPPORTED/2.2.26/blast-2.2.26-x64-linux.tar.gz
 tar -zxvf blast-2.2.26-x64-linux.tar.gz
+
+## Check it works
 ./blast-2.2.26/bin/blastall 
+
+
 
 
 
@@ -87,7 +113,11 @@ mkdir blat_v36x2
 cd blat_v36x2/
 wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/blat/blat
 chmod +x blat
+
+## Check it works
 ./blat
+
+
 
 
 
@@ -100,8 +130,12 @@ chmod +x blat
 wget https://sourceforge.net/projects/bowtie-bio/files/bowtie2/2.3.4.1/bowtie2-2.3.4.1-linux-x86_64.zip/download
 mv download bowtie2-2.3.4.1-linux-x86_64.zip
 unzip bowtie2-2.3.4.1-linux-x86_64.zip
+
+## Check it works
 ./bowtie2-2.3.4.1-linux-x86_64/bowtie2
 ./bowtie2-2.3.4.1-linux-x86_64/bowtie2-build
+
+
 
 
 
@@ -112,10 +146,14 @@ unzip bowtie2-2.3.4.1-linux-x86_64.zip
 ## https://github.com/weizhongli/cdhit
 ## 
 wget https://github.com/weizhongli/cdhit/releases/download/V4.6.8/cd-hit-v4.6.8-2017-1208-source.tar.gz
-tr -zxvf cd-hit-v4.6.8-2017-1208-source.tar.gz
+tar -zxvf cd-hit-v4.6.8-2017-1208-source.tar.gz
 cd cd-hit-v4.6.8-2017-1208/
 make
+
+## Check it works
 ./cd-hit
+
+
 
 
 
@@ -129,6 +167,12 @@ git clone https://github.com/gpertea/cdbfasta.git
 mv cdbfasta/ cdbfasta_v1
 cd cdbfasta_v1/
 make
+
+## Check it works
+./cdbfasta
+./cdbyank
+
+
 
 
 
@@ -145,7 +189,11 @@ cd EMBOSS-6.6.0/
 make
 make check
 make install
+
+## Check it works
 ./bin/revseq --help
+
+
 
 
 
@@ -162,6 +210,13 @@ mv EVidenceModeler-1.1.1 EVidenceModeler-1.1.1-modified
 cd EVidenceModeler-1.1.1-modified/
 # Modify file (See Mods_to_programs.sh)
 
+## Check it works
+./evidence_modeler.pl 
+## Run test
+cd simple_example/ && ./runMe.sh
+
+
+
 
 
 #############################################
@@ -175,7 +230,17 @@ cd EVidenceModeler-1.1.1-modified/
 cp gm_key_64 ~/.gm_key
 tar -zxvf gm_et_linux_64.tar.gz
 cd gm_et_linux_64/gmes_petap/
-# Edit gmes_petap.pl (See Mods_to_programs.sh)
+## Edit gmes_petap.pl (See Mods_to_programs.sh)
+
+## Use cpanm to install any missing perl modules. 
+## Known dependencies:
+##	Hash::Merge
+##	Logger::Simple
+
+## Check it works
+./gmes_petap.pl
+
+
 
 
 
@@ -192,7 +257,10 @@ cd gmap-2018-07-04/
 make
 make check
 make install
+## Check it works
 ./bin/gmap
+
+
 
 
 
@@ -209,9 +277,12 @@ make install
 ## Also as hhsuite2 is no longer supported the pre-compiled binaries 
 ## are not avalible online and the source code available does not compile
 ## on delta. The pre-compiled binaries supplied with this workflow were downloaded 
-## back in 2016
+## back in 2016 and appear to still work across different systems. 
 tar -zxvf hhsuite-latest-linux-x86_64.tar.gz
+## Check it works
 ./hhsuite-2.0.16-linux-x86_64/bin/hhblits
+
+
 
 
 
@@ -235,6 +306,10 @@ cp JAMg/bin/run_exonerate.pl Prepare_Golden_Genes/run_exonerate_withPSSM.pl
 cp -r JAMg/PerlLib Prepare_Golden_Genes/
 ## Next make the changes to each script detailed in Mods_to_programs.sh
 
+## Check it works
+
+
+
 
 
 #############################################
@@ -248,7 +323,39 @@ cd Jellyfish-2.2.10/bin/
 wget https://github.com/gmarcais/Jellyfish/releases/download/v2.2.10/jellyfish-linux
 mv jellyfish-linux jellyfish
 chmod +x jellyfish
+## Check it works
 ./jellyfish
+
+
+
+#############################################
+## Maker
+#############################################
+## 
+## 
+## 
+tar -zxvf maker-2.31.10-modified.tar.gz 
+cd maker-2.31.10-modified/src/
+
+## Have SNAP, Exonerate, RepeatMasker and BLAST already in your path
+export PATH=$PATH:../../JAMg/3rd_party/exonerate-2.2.0-x86_64/bin
+export PATH=$PATH:../../ncbi-blast-2.2.28+/bin
+export PATH=$PATH:../../SNAP_ret20Jul2018
+export PATH=$PATH:../../RepeatMasker-open-4-0-7
+
+perl Build.PL
+## Select MPI support -> No
+## Will installs missing PERL dependencies - Install locally if prompted. 
+./Build installdeps
+## Will finish installation
+./Build install
+
+## Generate control files to use for maker. Not really needed unless they are different from the ones used by the pipeline. 
+cd ../
+## Check it works
+./bin/maker -CTL
+
+
 
 
 
@@ -259,8 +366,12 @@ mkdir nseg
 cd nseg/
 wget ftp://ftp.ncbi.nih.gov/pub/seg/nseg/*
 make
+
+## Check it works
 ./nseg
 ./nmerge 
+
+
 
 
 
@@ -280,7 +391,11 @@ mv PASApipeline-v2.3.3 PASApipeline-v2.3.3-modified
 cd PASApipeline-v2.3.3-modified/
 # Modify file (See Mods_to_programs.sh)
 make
+
+## Check it works
 ./Launch_PASA_pipeline.pl 
+
+
 
 
 
@@ -293,6 +408,9 @@ cd RECON-1.08/src/
 make
 make install
 # Edit scripts/recon.pl - Add the path to the RECON bin directory on line 3.
+## Example: $path = ".../Dinoflagellate_Annotation_Workflow/programs/RECON-1.08/bin";
+
+## Check it works
 ./scripts/recon.pl
 
 
@@ -311,21 +429,31 @@ make install
 wget http://www.repeatmasker.org/RepeatMasker-open-4-0-7.tar.gz
 tar -zxvf RepeatMasker-open-4-0-7.tar.gz
 mv RepeatMasker RepeatMasker-open-4-0-7
-# Install RMBlast and Tandom Repeats Finder
-# Update repeat libraires. Dfam v2.0 is included with RepeatMasker and likely doesnt need updating.
-#	Dfam_consensus will need updating. Check the download website (http://www.dfam-consensus.org/#/public/download) for
-# 	the newest version.
+## Install RMBlast and Tandom Repeats Finder
+## Update repeat libraires. Dfam v2.0 is included with RepeatMasker and likely doesnt need updating.
+##	Dfam_consensus will need updating. Check the download website (http://www.dfam-consensus.org/#/public/download) for
+## 	the newest version.
 cd Libraries/
 wget http://www.dfam-consensus.org/assets/download/Dfam_consensus-20171107.tar.gz
 tar -zxvf Dfam_consensus-20171107.tar.gz
-# 	The RepBase library is not included and will need to be downloaded (requires free registration). 
-#	Download the RepBaseRepeatMaskerEdition-20170127.tar.gz file (Or what ever the new version is) into the RepeatMasker-open-4-0-7 directory
+## 	The RepBase library is not included and will need to be downloaded (requires free registration). 
+##	Download the RepBaseRepeatMaskerEdition-20170127.tar.gz file (Or what ever the new version is) into the RepeatMasker-open-4-0-7 directory
 cd RepeatMasker-open-4-0-7/
 tar -zxvf RepBaseRepeatMaskerEdition-20170127.tar.gz 
-# This will unpack the library into the Libraries directory
+## This will unpack the library into the Libraries directory
 ./configure
-# Follow the configure instructions. Provide the location of TRF and RMBlast (use as default search engine)
+## Follow the configure instructions. Provide the location of TRF and RMBlast (use as default search engine)
+## 
+## Should see:
+#Congratulations!  RepeatMasker is now ready to use.
+#The program is installed with a the following repeat libraries:
+#  Dfam database version Dfam_2.0
+#  RepeatMasker Combined Database: Dfam_Consensus-20171107, RepBase-20170127
+
+## Check it works
 ./RepeatMasker
+
+
 
 
 
@@ -349,7 +477,11 @@ cd RepeatModeler-open-1.0.11/
 # Follow the configure instructions. Provide the location of RepeatMasker, TRF, RepeatScout, RECON, nseg and RMBlast (use as default search engine)
 # 
 # NOTE: If you get a 'bad interpreter' error you need to change the top line of configure to be '#!/usr/bin/env perl' 
+
+## Check it works
 ./RepeatModeler
+
+
 
 
 
@@ -366,7 +498,12 @@ tar -zxvf ncbi-blast-2.2.28+-x64-linux.tar.gz
 cp -r ncbi-rmblastn-2.2.28/* ncbi-blast-2.2.28+/
 rm -rf ncbi-rmblastn-2.2.28
 mv ncbi-blast-2.2.28+ rmblast-2.2.28
+
+## Check it works
 ./rmblast-2.2.28/bin/rmblastn -help
+
+## Untar and have just for the fun of it (and to use with maker).
+tar -zxvf ncbi-blast-2.2.28+-x64-linux.tar.gz
 
 # NOTE: v2.6 failes on Delta during 'make install' with "make[1]: *** [install-toolkit] Error 1"
 # 	It is very likely that this error can be ignored however to be safe I used the original 2.2.28 version
@@ -391,6 +528,8 @@ make install
 
 
 
+
+
 #############################################
 ## RepeatScout 1.0.5
 #############################################
@@ -399,7 +538,12 @@ tar -zxvf RepeatScout-1.0.5.tar.gz
 mv RepeatScout-1 RepeatScout-1.0.5
 cd RepeatScout-1.0.5/
 make
+
+## Check it works
 ./RepeatScout 
+./build_lmer_table
+
+
 
 
 
@@ -412,7 +556,11 @@ make
 wget https://github.com/COMBINE-lab/salmon/releases/download/v0.9.1/Salmon-0.9.1_linux_x86_64.tar.gz
 tar -zxvf Salmon-0.9.1_linux_x86_64.tar.gz
 mv Salmon-latest_linux_x86_64 Salmon-0.9.1
+
+## Check it works
 ./Salmon-0.9.1/bin/salmon 
+
+
 
 
 
@@ -429,6 +577,13 @@ cd SNAP_ret20Jul2018/
 export ZOE=$PWD/Zoe
 make
 
+## Check it works
+./snap
+./fathom
+./forge
+
+
+
 
 
 #############################################
@@ -441,7 +596,11 @@ cd Tandem_Repeats_Finder_4.09/
 # Copy in downloaded file
 mv trf409.legacylinux64 trf
 chmod +x trf
+
+## Check it works
 ./trf
+
+
 
 
 
@@ -451,6 +610,12 @@ chmod +x trf
 ## 
 ## Modified code provided by Raul
 ## 
+tar -zxvf TransposonPSI_modified.tar.gz 
+
+## Check it works
+./TransposonPSI_modified/transposonPSI_mod.pl 
+
+
 
 
 
@@ -464,22 +629,32 @@ chmod +x trf
 ## 	Bowtie2
 ## 	Jellyfish
 ## 	salmon
+## 	samtools
 ## 
 ## From: https://github.com/trinityrnaseq/trinityrnaseq/releases
 ## Download the leatest version of the software.
-wget https://github.com/trinityrnaseq/trinityrnaseq/archive/Trinity-v2.6.6.tar.gz
-tar -zxvf Trinity-v2.6.6.tar.gz
-mv trinityrnaseq-Trinity-v2.6.6/ Trinity-v2.6.6/
-cd Trinity-v2.6.6/
+## Version 2.8.4 is needed for strand-specific data.
+wget https://github.com/trinityrnaseq/trinityrnaseq/archive/Trinity-v2.8.4.tar.gz
+tar -zxvf ../install_files/Trinity-v2.8.4.tar.gz
+mv trinityrnaseq-Trinity-v2.8.4 Trinity-v2.8.4
+cd Trinity-v2.8.4
+
+## CMake 3.1 or higher is required.
+## If loading CMake loads a different version of gcc then the one you have a default on your system
+## you need to also load that gcc version when using Trinity (both DN and GG).
+
 make
 make plugins
+## Check it works
 ./Trinity
+
 # Run test dataset
-export PATH=$PATH:$PWD/../../../Jellyfish-2.2.10/bin
-export PATH=$PATH:$PWD/../../../bowtie2-2.3.4.1-linux-x86_64
-export PATH=$PATH:$PWD/../../../Salmon-0.9.1/bin
-cd sample_data/test_Trinity_Assembly/
-./runMe.sh
+export TRINITY_HOME=$PWD
+export PATH=$PATH:$PWD/../Jellyfish-2.2.10/bin
+export PATH=$PATH:$PWD/../bowtie2-2.3.4.1-linux-x86_64
+export PATH=$PATH:$PWD/../Salmon-0.9.1/bin
+# Add samtools to path
+cd sample_data/test_Trinity_Assembly/ && ./runMe.sh
 
 
 

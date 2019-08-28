@@ -5,5 +5,5 @@ export PATH=${PASA}/pasa-plugins/seqclean/mdust:$PATH
 export PATH=${PASA}/pasa-plugins/seqclean/psx:$PATH
 export PATH=${PASA}/pasa-plugins/seqclean/trimpoly:$PATH
 
-run_cmd "${PASA}/pasa-plugins/seqclean/seqclean/seqclean transcripts.fasta -v ${UNIVEC}"
+run_cmd "${PASA}/pasa-plugins/seqclean/seqclean/seqclean transcripts.fasta -v ${UNIVEC} -c ${NCPUS}"
 

@@ -31,6 +31,9 @@ run_cmd "${REPEATMASKER}/RepeatMasker -lib ${GENOME_NAME}_CombinedRepeatLib.lib 
 # SoftMask Genome
 run_cmd "${BEDTOOLS}/maskFastaFromBed -soft -fi ${GENOME_NAME} -fo ${GENOME_NAME}.softmasked -bed ${GENOME_NAME}.out.gff"
 
+# Get repeat features in gff3 format (used for EVM later on)
+run_cmd "perl ${REPEATMASKER}/util/rmOutToGFF3.pl ${GENOME_NAME}.out > ${GENOME_NAME}.out.gff3"
+
 # Model repeat landscape (not needed for annotation)
 run_cmd "perl ${REPEATMASKER}/util/calcDivergenceFromAlign.pl -s ${GENOME_NAME}.divsum ${GENOME_NAME}.align"
 run_cmd "perl ${REPEATMASKER}/util/createRepeatLandscape.pl -div ${GENOME_NAME}.divsum -g ${GENOME_SIZE} > ${GENOME_NAME}.html"

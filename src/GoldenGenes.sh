@@ -1,10 +1,5 @@
 source ../env.sh
 
-# Clean up.
-# rm -r *.masked_dir *.softmasked_dir *.softmasked.* GoldenGenes.* *.fasta.transdecoder.cds.gmap *.fasta.transdecoder.cds_vs_genome.* *.fasta.transdecoder.genome.gff3.nr.log *.assemblies.fasta.transdecoder.gff3.* *.assemblies.fasta.transdecoder.genome.gff3.nr final_golden_genes.gff3.* run_exonerate_commands.cmd*
-# 
-# rm -r ${GENOME_NAME}.masked_dir/ ${GENOME_NAME}.softmasked_dir/ ${GENOME_NAME}.softmasked.gmap/ PASA.assemblies.fasta.transdecoder.cds.gmap/ PASA.assemblies.fasta.transdecoder.gff3.contigs_queries/
-
 export PATH=${CDBFASTA}:$PATH
 export PATH=${BLAST}:$PATH
 export PATH=${JAMG_PATH}/3rd_party/exonerate-2.2.0-x86_64/bin:$PATH
@@ -15,7 +10,7 @@ export PATH=${TRINITY}/trinity-plugins/BIN:$PATH
 export PATH=${EMBOSS}:$PATH
 export PATH=${GMAP}:$PATH
 
-export PERL5LIB=${PREPARE_GOLDEN}/PerlLib/
+export PERL5LIB=${PREPARE_GOLDEN}/PerlLib/:$PERL5LIB
 export PATH=${PREPARE_GOLDEN}:$PATH
 
 ${PREPARE_GOLDEN}/prepare_golden_genes_for_predictors_GA_DonorSite.pl \

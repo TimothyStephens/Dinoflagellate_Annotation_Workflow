@@ -30,30 +30,24 @@ for PART in ${BATCH_DIR}/*;
         C=$(echo ${GENOME} | sed -e 's/.*.part-\(.*\).fa.*/\1/')
 	#echo $C
 	
-	sed -i -e "s@__SEQS2RUN__@${GENOME}@" ${PART}_dir/run_MAKER.sh
-	sed -i -e "s@__MPI_DB__@${PWD}@" ${PART}_dir/run_MAKER.sh
-	sed -i -e "s@__PROTDB__@${PROTEINS_4_PREDICTION}@" ${PART}_dir/maker_opts.ctl
-	sed -i -e "s@__NCPUS__@${NCPUS}@" ${PART}_dir/maker_opts.ctl
-	sed -i -e "s@__NAME__@${NAME}_${C}@" ${PART}_dir/run_MAKER.sh
-	sed -i -e "s@__NCPUS__@${NCPUS}@" ${PART}_dir/run_MAKER.sh
-	sed -i -e "s@__REPEATLIB__@${REPEAT_LIB}@" ${PART}_dir/maker_opts.ctl
+	sed -i -e "s@__SEQS2RUN__@${GENOME}@" -e "s@__MPI_DB__@${PWD}@" -e "s@__NAME__@${NAME}_${C}@" -e "s@__NCPUS__@${NCPUS}@" ${PART}_dir/run_MAKER.sh
+	sed -i -e "s@__PROTDB__@${PROTEINS_4_PREDICTION}@" -e "s@__NCPUS__@${NCPUS}@" -e "s@__MAX_INTRON_LENGTH__@${MAX_INTRON_LENGTH}@" -e "s@__REPEATLIB__@${REPEAT_LIB}@" ${PART}_dir/maker_opts.ctl
 	sed -i -e "s@__BLAST__@${BLAST}@" -e "s@__REPEAT_MASKER__@${REPEATMASKER}@" -e "s@__EXONERATE__@${JAMG_PATH}/3rd_party/exonerate-2.2.0-x86_64/bin@" ${PART}_dir/maker_exe.ctl
 	
 	done
 
-echo 'for var in SPLIT_MAKER_BATCH/*; do cd ${var}; pwd; qsub run_MAKER.sh; cd ../..; done'
+echo 'for var in CONTIGS_SPLIT/*; do cd ${var}; pwd; qsub run_MAKER.sh; cd ../..; done'
 
 
 
-exit
 
 ## Run certain parts. Usefull for managing your job submission/resource usage. 
 # %03g for 3 digit NPARTS. 
 
 
-#for var in $(seq -f "%03g" 1 100); do cd SPLIT_MAKER_BATCH/*.part-${var}*_dir; pwd; qsub run_MAKER.sh; cd ../..; done
-#for var in $(seq -f "%03g" 101 200); do cd SPLIT_MAKER_BATCH/*.part-${var}*_dir; pwd; qsub run_MAKER.sh; cd ../..; done
-#for var in $(seq -f "%03g" 201 300); do cd SPLIT_MAKER_BATCH/*.part-${var}*_dir; pwd; qsub run_MAKER.sh; cd ../..; done
-#for var in $(seq -f "%03g" 301 400); do cd SPLIT_MAKER_BATCH/*.part-${var}*_dir; pwd; qsub run_MAKER.sh; cd ../..; done
+#for var in $(seq -f "%03g" 1 100); do cd CONTIGS_SPLIT/*.part-${var}*_dir; pwd; qsub run_MAKER.sh; cd ../..; done
+#for var in $(seq -f "%03g" 101 200); do cd CONTIGS_SPLIT/*.part-${var}*_dir; pwd; qsub run_MAKER.sh; cd ../..; done
+#for var in $(seq -f "%03g" 201 300); do cd CONTIGS_SPLIT/*.part-${var}*_dir; pwd; qsub run_MAKER.sh; cd ../..; done
+#for var in $(seq -f "%03g" 301 400); do cd CONTIGS_SPLIT/*.part-${var}*_dir; pwd; qsub run_MAKER.sh; cd ../..; done
 
 

@@ -242,7 +242,7 @@ static bool dss_ga_allowed;     // allows recognition of GA-AG sites in Dinoflag
 ## EVidenceModeler
 #############################################
 ## 
-## 2 scripts need to be changed to support GA-AG splice site.
+## 3 scripts need to be changed to support GA-AG splice site.
 ## 
 
 
@@ -260,18 +260,18 @@ print STDERR "\n-finding all potential splice sites, looking for GT/GC/GA donors
 # modified lines:
 798-802
 # FROM:
-my @gt_positions = &find_all_positions('GT');$
-my @gc_positions = &find_all_positions('GC');$
-foreach my $pos (@gt_positions, @gc_positions) {$ 
-     $GENOME_FEATURES[$pos+1] = $DONOR;$
-}$
+my @gt_positions = &find_all_positions('GT');
+my @gc_positions = &find_all_positions('GC');
+foreach my $pos (@gt_positions, @gc_positions) {
+     $GENOME_FEATURES[$pos+1] = $DONOR;
+}
 
 # TO:
-my @gt_positions = &find_all_positions('GT');$
-my @gc_positions = &find_all_positions('GC');$
-my @ga_positions = &find_all_positions('GA');  # allows recognition of GA-AG sites in Dinoflagellates. TGS$
-foreach my $pos (@gt_positions, @gc_positions, @ga_positions) {  # allows recognition of GA-AG sites in Dinoflagellates. TGS$
-   $GENOME_FEATURES[$pos+1] = $DONOR;$
+my @gt_positions = &find_all_positions('GT');
+my @gc_positions = &find_all_positions('GC');
+my @ga_positions = &find_all_positions('GA');  # allows recognition of GA-AG sites in Dinoflagellates. TGS
+foreach my $pos (@gt_positions, @gc_positions, @ga_positions) {  # allows recognition of GA-AG sites in Dinoflagellates. TGS
+   $GENOME_FEATURES[$pos+1] = $DONOR;
 }
 
 
@@ -416,6 +416,226 @@ run_exonerate_withPSSM.pl
 
 
 
+
+# modified file:
+PerlLib/CDNA/CDNA_alignment.pm
+# modified block:
+line 320 - 356
+
+##
+## FROM:
+## 
+sub get_consensus_splice_sites () {
+
+    my $orientation = shift;
+
+    my @pairs;
+
+    if ($orientation eq '+') {
+
+        ## Forward pairs
+        # GT-AG
+        # GC-AG
+        # AT-AC
+
+        push (@pairs, ['GT', 'AG'], ['GC', 'AG']);
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['AT', 'AC']);
+        }
+
+    }
+
+    else {
+        ## Rev Comp of above:
+        # CT-AC
+        # CT-GC
+        # GT-AT
+
+        push (@pairs, ['CT', 'AC'], ['CT', 'GC']);
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['GT', 'AT']);
+        }
+    }
+
+
+    return (@pairs);
+}
+
+
+##
+## TO:
+##
+sub get_consensus_splice_sites () {
+
+    my $orientation = shift;
+
+    my @pairs;
+
+    if ($orientation eq '+') {
+
+        ## Forward pairs
+        # GT-AG
+        # GC-AG
+        # AT-AC
+
+        push (@pairs, ['GT', 'AG'], ['GC', 'AG']);
+        push (@pairs, ['GA' ,'AG']);    # add GA-AG for Dinoflagellates. TGS
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['AT', 'AC']);
+        }
+
+    }
+
+    else {
+        ## Rev Comp of above:
+        # CT-AC
+        # CT-GC
+        # GT-AT
+
+        push (@pairs, ['CT', 'AC'], ['CT', 'GC']);
+        push (@pairs, ['CT', 'TC']);    # add GA-AG for Dinoflagellates. TGS
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['GT', 'AT']);
+        }
+    }
+
+
+    return (@pairs);
+}
+
+
+
+# modified file:
+PerlLib/Gene_validator.pm
+# modified block:
+line 139 - 175
+
+##
+## FROM:
+## 
+sub _get_consensus_splice_sites () {
+
+    my $orientation = shift;
+
+    my @pairs;
+
+    if ($orientation eq '+') {
+
+        ## Forward pairs
+        # GT-AG
+        # GC-AG
+        # AT-AC
+
+        push (@pairs, ['GT', 'AG'], ['GC', 'AG']);
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['AT', 'AC']);
+        }
+
+    }
+
+    else {
+        ## Rev Comp of above:
+        # CT-AC
+        # CT-GC
+        # GT-AT
+
+        push (@pairs, ['CT', 'AC'], ['CT', 'GC']);
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['GT', 'AT']);
+        }
+    }
+
+
+    return (@pairs);
+}
+
+
+## 
+## TO:
+## 
+sub _get_consensus_splice_sites () {
+
+    my $orientation = shift;
+
+    my @pairs;
+
+    if ($orientation eq '+') {
+
+        ## Forward pairs
+        # GT-AG
+        # GC-AG
+        # AT-AC
+
+        push (@pairs, ['GT', 'AG'], ['GC', 'AG']);
+        push (@pairs, ['GA' ,'AG']);    # add GA-AG for Dinoflagellates. TGS
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['AT', 'AC']);
+        }
+
+    }
+
+    else {
+        ## Rev Comp of above:
+        # CT-AC
+        # CT-GC
+        # GT-AT
+
+        push (@pairs, ['CT', 'AC'], ['CT', 'GC']);
+        push (@pairs, ['CT', 'TC']);    # add GA-AG for Dinoflagellates. TGS
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['GT', 'AT']);
+        }
+    }
+
+
+    return (@pairs);
+}
+
+
+
+
+# modified file:
+PerlLib/Gene_obj.pm
+# modified block:
+line 1822
+
+##
+## FROM:
+## 
+my $check_donor = ($donor =~ /gt|gc/i);
+
+
+## 
+## TO:
+## 
+my $check_donor = ($donor =~ /gt|gc|ga/i); # add GA-AG for Dinoflagellates. TGS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #############################################
 ## PASA (SQLite compatable)
 #############################################
@@ -513,6 +733,151 @@ sub get_consensus_splice_sites () {
 
     return (@pairs);
 }
+
+
+
+
+
+# modified file:
+${PASAHOME}/PerlLib/Gene_validator.pm
+# modified block:
+line 154 - 190
+
+##
+## FROM:
+## 
+sub _get_consensus_splice_sites () {
+
+    my $orientation = shift;
+
+    my @pairs;
+
+    if ($orientation eq '+') {
+
+        ## Forward pairs
+        # GT-AG
+        # GC-AG
+        # AT-AC
+
+        push (@pairs, ['GT', 'AG'], ['GC', 'AG']);
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['AT', 'AC']);
+        }
+
+    }
+
+    else {
+        ## Rev Comp of above:
+        # CT-AC
+        # CT-GC
+        # GT-AT
+
+        push (@pairs, ['CT', 'AC'], ['CT', 'GC']);
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['GT', 'AT']);
+        }
+    }
+
+
+    return (@pairs);
+}
+
+
+
+
+## 
+## TO:
+## 
+sub _get_consensus_splice_sites () {
+
+    my $orientation = shift;
+
+    my @pairs;
+
+    if ($orientation eq '+') {
+
+        ## Forward pairs
+        # GT-AG
+        # GC-AG
+        # AT-AC
+
+        push (@pairs, ['GT', 'AG'], ['GC', 'AG']);
+        push (@pairs, ['GA' ,'AG']);    # add GA-AG for Dinoflagellates. TGS
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['AT', 'AC']);
+        }
+
+    }
+
+    else {
+        ## Rev Comp of above:
+        # CT-AC
+        # CT-GC
+        # GT-AT
+
+        push (@pairs, ['CT', 'AC'], ['CT', 'GC']);
+        push (@pairs, ['CT', 'TC']);    # add GA-AG for Dinoflagellates. TGS
+
+        if ($ALLOW_ATAC_splice_pairs) {
+            push (@pairs, ['GT', 'AT']);
+        }
+    }
+
+
+    return (@pairs);
+}
+
+
+
+
+# modified file:
+${PASAHOME}/PerlLib/Gene_obj.pm
+# modified block:
+line 1845
+
+##
+## FROM:
+## 
+my $check_donor = ($donor =~ /gt|gc/i);
+
+
+## 
+## TO:
+## 
+my $check_donor = ($donor =~ /gt|gc|ga/i); # add GA-AG for Dinoflagellates. TGS
+
+
+
+# modified file:
+${PASAHOME}/pasa-plugins/transdecoder/PerlLib/Gene_obj.pm
+# modified block:
+line 1845
+
+##
+## FROM:
+## 
+my $check_donor = ($donor =~ /gt|gc/i);
+
+
+## 
+## TO:
+## 
+my $check_donor = ($donor =~ /gt|gc|ga/i); # add GA-AG for Dinoflagellates. TGS
+
+
+
+
+
+
+
+## Some perl module scripts have not been changes to recognize GA-AG sites.
+## Likely not an issue as they will liekly not be used in the standard annotation procedure. 
+./PerlLib/CIGAR.pm
+./PerlLib/GTF.pm
+./PasaWeb/*
 
 
 

@@ -15,8 +15,6 @@
 ## 		it is even possible (too hard coded in). 
 ## 	- Modify SNAP to accept donor sites other than GT. Coded in C++ so it will take a better coder than me to do it. 
 ## 	- TrinityDN does not easily take unpaired reads. (Can not take unpaired data if the data is strand specific)
-## 	- Make an alternative to analyze_blastPlus_topHit_coverage.pl which does not require passing the while protein database
-##		Can just run blast with custom output format which gives all the infor the script would need. 
 ## 
 ## 
 ## 
@@ -28,39 +26,39 @@
 ## 4. 
 ## 
 ## 
-##        Genome Sequence                               RNA-Seq
-##               |                                         |
-##               |                                   +-----+-----------+
-##               |                                   |                 |    
-##       Repeat Masker/Modeler                   TrinityGG         TrinityDN
-##               |                                   |                 |
-##               |                                   +-----------------+
-##               |                                           |
-##               |                                        SeqClean
-##               |                                           |
-##               |                                           |
-##               |                                          PASA
-##               |                                           |
-##               |                                           |
-##               |                                        BLASTX
-##               |                                           |
-##               |                                    +------+-------+
-##               |                                    |              |
-##               |                                HHBLITS      Transposon_PSI
-##               |                                    |              |
-##   +--------+--+--------------+                     +------+-------+
-##   |        |                 |                            |
-##  gff     Hard              Soft                        CD-HITS
-##   |        |                 |                            |
-##   |        |                 |                            |
-##   |        |                 |                       Golden Genes
-##   |        |                 |                            |                  Protein DB
-##   |        |             +----------+-------+-------------+                       |
-##   |        |             |   |      |       |                                     |
-##   |   GeneMark-ES      SNAP--+--AUGUSTUS    |                            Maker protein2genome
-##   |        |             |          |       |                                     |
-##   |        |             |          |       |                                     | 
-##   +--------+-------------+---------EVM -----+-------------------------------------+
+##        Genome Sequence                          RNA-Seq
+##               |                                    |
+##               |                              +-----+-----------+
+##               |                              |                 |    
+##       Repeat Masker/Modeler              TrinityGG         TrinityDN
+##               |                              |                 |
+##               |                              +-----------------+
+##               +--> Maker                             |
+##               |                                   SeqClean
+##               |                                      |
+##               |                                      |
+##               |                 Polished IsoSeq --> PASA---------------+
+##               |                                      |                 |
+##               |                                      |                 |
+##               |                                   BLASTX               |
+##               |                                      |                 |
+##               |                               +------+-------+         |
+##               |                               |              |         |
+##               |                           HHBLITS      Transposon_PSI  |
+##               |                               |              |         |
+##            +--+--------------+                +------+-------+         |
+##            |                 |                       |                 |
+##          Hard              Soft                   CD-HITS              |
+##            |                 |                       |                 |
+##            |                 |                       |                 |
+##            |                 |                  Golden Genes           |
+##            |                 |                       |                 |       Protein DB
+##            |             +----------+----------------+                 |           |
+##            |             |   |      |                                  |           |
+##       GeneMark-ES      SNAP--+--AUGUSTUS                               |  Maker protein2genome <- Repeat_library
+##            |             |          |                                  |           |
+##            |             |          |                                  |           | 
+##            +-------------+---------EVM --------------------------------+-----------+
 ##                                     |
 ##                                   Filter
 ## 
@@ -94,6 +92,37 @@ source env.sh
 
 
 
+
+
+## Two files will need to be modified and two files will need to be created.
+
+# The two file need to be placed in your home directory. They are position specific score matrix files which allow exonerate to
+# use alternative splice sites. The values in these files should really be generated using evidence based approaches (such as from PASA)
+# however simply using them with place holder values will produce genes with more accurate intron/exon boundaries. 
+
+
+$ cat ~/.exonerate_five_prime.pssm
+# start of example 5' splice data
+# A C G T
+splice
+ 0  0 100   0
+ 33  33   0 34
+# end of test 5' splice data
+
+
+$ cat ~/.exonerate_three_prime.pssm
+# start of example 3' splice data
+# A C G T
+100   0   0   0
+  0   0 100   0
+splice
+ 4  3  90  3
+# end of example 3' splice data
+
+
+
+
+
 ## NOTE:
 ## 1) Trinity does not support mixing library types (e.g. stranded and non-stranded).
 ## 	So each lib type will have to be run seperately for both Trinity GG & DN.
@@ -113,6 +142,11 @@ source env.sh
 ./workflow_setup.sh trinitygg
 qsub run_TrinityGG.sh
 
+grep -i 'error' TrinityGG.log
+grep -i 'warn' TrinityGG.log
+grep -i 'seg' TrinityGG.log
+grep -i 'fault' TrinityGG.log
+
 ## Clean Up.
 rm -r TrinityGG/ ${GENOME_NAME}.*
 
@@ -128,6 +162,12 @@ rm -r TrinityGG/ ${GENOME_NAME}.*
 ## If your library is not strended remove this options completely. 
 ./workflow_setup.sh trinitydn
 qsub run_TrinityDN.sh
+
+grep -i 'error' TrinityDN.log 
+grep -i 'warn' TrinityDN.log ## Get a lot of NON_FATAL_EXCEPTION warnings
+grep -i 'warn' TrinityDN.log | grep -v 'NON_FATAL_EXCEPTION'
+grep -i 'seg' TrinityDN.log 
+grep -i 'fault' TrinityDN.log 
 
 ## Clean Up.
 rm -r TrinityDN/
@@ -168,6 +208,14 @@ qsub run_RepeatAnalysis.sh
 
 ## Check the *.sdterr *.sdtout files
 
+
+## If the RepeatMasker.sdterr file has Segmentation fault errors from Tandem Repeat Finder (trf) it is because
+## your directory structure is too deep and/or your genome file name is too long. TRF has a limit on the length
+## of the input file name (~375 characters), and since RepeatMasker passes an absolute path to TRF this can be 
+## easily surpassed. To fix this problem you need to move your working directory to a higher position in your 
+## file system or rename your genome to make it shorter. 
+
+
 ## For more information about the output of Repeat Masker see http://www.repeatmasker.org/webrepeatmaskerhelp.html#reading
 
 #### Recommend CladeC1
@@ -179,7 +227,14 @@ qsub run_RepeatAnalysis.sh
 ## mem=36.11GB
 ## Walltime=14:15:46+12:05:43
 	
-	
+
+grep -i 'error' RepeatMasker.sdtout RepeatModeler.sdtout
+grep -i 'warn' RepeatMasker.sdtout RepeatModeler.sdtout
+grep -i 'seg' RepeatMasker.sdtout RepeatModeler.sdtout
+grep -i 'fault' RepeatMasker.sdtout RepeatModeler.sdtout
+
+
+
 ## Clean Up.
 rm -r RM_*/
 
@@ -191,9 +246,9 @@ rm -r RM_*/
 ## PASA
 #############################################
 ## 
-## 
-## PASA has a habit of hanging after about 24hrs, this is ususally due to
-## lack of vmem (qdel job and rerun with more vmem). 
+## NOTE:
+## 	- PASA has a habit of hanging after about 24hrs, this is ususally due to
+## 	  lack of vmem (qdel job and rerun with more vmem).
 ## 
 ./workflow_setup.sh pasa
 
@@ -202,9 +257,15 @@ rm -r RM_*/
 ## A sample command is below.
 cat ../TRINITY_DN/Trinity-DN.fasta | ${PASA}/misc_utilities/accession_extractor.pl > TrinityDN.accs
 
+## PASA can take advantage of strand specific transcriptome data.
+## Add '--transcribed_is_aligned_orient' to the Launch_PASA_pipeline.pl command and '-S' to the pasa_asmbls_to_training_set.dbi command in the run_PASA.sh script. 
+## 
+## If you are interested in alternative splicing add '--ALT_SPLICE' to Launch_PASA_pipeline.pl (see https://github.com/PASApipeline/PASApipeline/wiki/PASA_alt_splicing)
 
 qsub run_PASA.sh
 
+
+perl $SCRIPTS/GeneStats.pl ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.genome.gff3 ${GENOME_NAME} > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds.stats
 
 #### Recommend CladeC1
 ## cpus=8
@@ -220,22 +281,27 @@ qsub run_PASA.sh
 ## BLAST Protein DB
 #############################################
 
-# Get sequences which are type:complete. 
+
+./workflow_setup.sh blast2db
+
+
+## Get sequences which are type:complete. 
 grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep | grep 'type:complete' | awk '{print $1}' | sed -e 's/>//' > Complete_Sequences.ids
 
-# Get all seq IDs that have only  one CDS. 
+## Get all seq IDs that have only  one CDS. 
 awk '$3=="CDS"{print $0}' ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.genome.gff3 | awk '{ print $9 }' | sed -e 's/.*Parent=\(.*\)/\1/' | sort | uniq -c | awk '{ if($1==1) print $2 }' > Single_CDS_Genes.ids
 
-# Get seq IDs which have coords on the genome. 
+## Get seq IDs which have coords on the genome. 
 awk '$3=="mRNA"{print $0}' ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.genome.gff3 | awk '{ print $9 }' | sed -e 's/ID=\(.*\);Parent.*/\1/' > Genes_with_genome_coords.ids
 
-# Filter IDs
+## Filter IDs
 
-# Get seq IDs that are NOT Single Exon genes, have genome coords, and are type complete. 
+## Get seq IDs that are NOT Single Exon genes, have genome coords, and are type complete. 
+## The later GoldenGenes stage will filter these genes anyway so we might as well filter them out now before the intensive blast stage. 
 python $SCRIPTS/filter_ids.py -i Complete_Sequences.ids -o Complete_Sequences.ids.filtered -k Genes_with_genome_coords.ids -r Single_CDS_Genes.ids
 
 
-# Get pep sequences in filtered ID list
+## Get pep sequences in filtered ID list
 xargs $SAMTOOLS/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep < Complete_Sequences.ids.filtered > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered
 mkdir FASTA_SPLIT
 perl $SCRIPTS/fasta-splitter.pl --n-parts 50 --out-dir FASTA_SPLIT ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered
@@ -261,9 +327,13 @@ qsub run_BLAST.sh
 
 
 cat FASTA_SPLIT/*.outfmt6 > blastp.outfmt6
-cat blastp.outfmt6 | awk '{if ((($8-$7+1) / $13) > 0.8) {print $1}}' | sort | uniq | wc -l
 
-cat blastp.outfmt6 | awk '{if ((($8-$7+1) / $13) > 0.8) {print $1}}' | sort | uniq | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa
+## Run either (both query and subject coverage >80%)
+cat blastp.outfmt6 | awk -F'\t' '$11<1E-20' | awk -F'\t' '{if ( (( (($8-$7)+1) / $13) > 0.8) && ( (($10-$9)+1) / $14) > 0.8 ) {print $1}}' | sort | uniq | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa
+## OR (only query coverage >80%)
+cat blastp.outfmt6 | awk -F'\t' '$11<1E-20' | awk -F'\t' '{if ( (( (($8-$7)+1) / $13) > 0.8) ) {print $1}}' | sort | uniq | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa
+
+## NOTE: The first command is more strict and possibly better. However, this might be too strict and result in too few genes moving into the next stage. 
 
 
 
@@ -288,6 +358,7 @@ qsub run_HHBLITS.sh
 
 # Check what errors occured.
 # Expect: "WARNING: ignoring invalid symbol '*' at pos."
+##
 cat FASTA_SPLIT/*.stderr
 cat FASTA_SPLIT/*.stderr | sed '/^$/d' |  wc -l
 cat FASTA_SPLIT/*.stderr | sed '/^$/d' |  grep -c 'WARNING: ignoring invalid symbol'
@@ -305,12 +376,15 @@ for f in `grep -l "No 1" FASTA_SPLIT/*.part-*.hhr`; do cat $f | awk 'NR==1{print
 rm -r FASTA_SPLIT/
 
 
+
 #############################################
 ## TransposonPSI
 #############################################
 ## 
 ## 
 ## 
+
+./workflow_setup.sh transposonpsi
 
 qsub run_TransposonPSI.sh
 
@@ -333,6 +407,8 @@ cat *.TPSI.allHits | awk '{ print $5 }' | sort | uniq > TransposonPSI.hit.seq.id
 ## 
 ## 
 ## 
+
+./workflow_setup.sh cdhits
 
 # Filter IDs
 
@@ -364,6 +440,8 @@ grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete
 #############################################
 ## *prepare_golden_genes_for_predictors_GA_DonorSite.pl*
 #############################################
+
+./workflow_setup.sh goldengenes
 
 ## Get PASA output for GoldenSet.
 ## 
@@ -397,8 +475,7 @@ rm -r PASA.assemblies.fasta.transdecoder.gff3.contigs_queries/ ${GENOME_NAME}.ma
 ## GeneMark-ES
 #############################################
 
-# Add "#!/usr/bin/env perl" to the top of the gmes_petap.pl script.
-Time::HiRes
+./workflow_setup.sh genemark
 
 qsub run_GeneMark-ES.sh 
 
@@ -411,6 +488,12 @@ qsub run_GeneMark-ES.sh
 ## mem=5.5GB
 ## Walltime=2:53:23
 
+
+perl ~/PROGRAMS/Dinoflagellate_Annotation_Workflow/programs/EVidenceModeler-1.1.1-modified/EvmUtils/gff3_file_to_proteins.pl genemark.gff3 ../CCMP1383_scaffolds.fa CDS > genemark.cds.fa
+sed -e 's/:/./g' genemark.gff3 > genemark.cleaned.gff3
+perl $SCRIPTS/GeneStats.pl genemark.cds.fa genemark.cleaned.gff3 ../CCMP1383_scaffolds.fa > genemark.cds.fa.stats
+
+
 ## Clean Up.
 rm -r data/ run/ info/ output/data output/gmhmm
 
@@ -418,6 +501,8 @@ rm -r data/ run/ info/ output/data output/gmhmm
 #############################################
 ## SNAP
 #############################################
+
+./workflow_setup.sh snap
 
 # Get just the scaffolds with Golden Genes
 grep '>' final_golden_genes.gff3.nr.golden.zff | sed 's/>\(.*\)/\1/' | xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}.softmasked > snap.fasta
@@ -439,6 +524,10 @@ cat PREDICT/${GENOME_NAME}.softmasked_dir/*.softmasked.snap.gff3.stderr ## Expec
 ## mem=7.5GB
 ## Walltime=23:06
 
+
+perl ~/PROGRAMS/Dinoflagellate_Annotation_Workflow/programs/EVidenceModeler-1.1.1-modified/EvmUtils/gff3_file_to_proteins.pl snap.gff3 CCMP1383_scaffolds.fa.softmasked CDS > snap.cds.fa
+perl $SCRIPTS/GeneStats.pl snap.cds.fa snap.gff3 CCMP1383_scaffolds.fa.softmasked > snap.cds.fa.stats
+
 ## Clean Up.
 rm -r ${GENOME_NAME}.softmasked_dir/
 
@@ -446,6 +535,11 @@ rm -r ${GENOME_NAME}.softmasked_dir/
 #############################################
 ## AUGUSTUS
 #############################################
+
+./workflow_setup.sh augustus
+
+## To clean species if you wish to re-run training.
+#rm -r ${AUGUSTUS}/config/species/${SPECIES}
 
 qsub run_Augustus_Training.sh
 
@@ -466,16 +560,11 @@ qsub run_Augustus_Training.sh
 codingseq on
 print_utr on
 
-mkdir CONTIGS_SPLIT
-perl $SCRIPTS/fasta-splitter.pl --n-parts 100 --out-dir CONTIGS_SPLIT ${GENOME_NAME}.softmasked
-ls -1 CONTIGS_SPLIT/* > files2run.txt
-
+mkdir FASTA_SPLIT
+perl $SCRIPTS/fasta-splitter.pl --n-parts 100 --out-dir FASTA_SPLIT ${GENOME_NAME}.softmasked
+ls -1 FASTA_SPLIT/* > files2run.txt
 
 qsub run_Augustus_Prediction.sh
-
-cat CONTIGS_SPLIT/*.augustus.out | ${AUGUSTUS}/scripts/join_aug_pred.pl > augustus.gff3 
-perl ${AUGUSTUS}/scripts/getAnnoFasta.pl augustus.gff3
-## If you want the prot and nucl sequence predicted by augustus. 
 
 ## Recommend C1
 ## No.Jobs=100
@@ -489,6 +578,17 @@ perl ${AUGUSTUS}/scripts/getAnnoFasta.pl augustus.gff3
 ## Walltime=00:38:13-08:11:44
 
 
+
+cat FASTA_SPLIT/*.augustus.out | ${AUGUSTUS}/scripts/join_aug_pred.pl > augustus.gff3 
+## To get the prot and nucl sequence predicted by augustus from the gff3 file. 
+perl ${AUGUSTUS}/scripts/getAnnoFasta.pl augustus.gff3
+
+perl ${EVIDENCEMODELER}/EvmUtils/misc/augustus_GFF3_to_EVM_GFF3.pl augustus.gff3 | sed '/^$/d' > augustus.cleaned.gff3
+
+perl $SCRIPTS/GeneStats.pl augustus3.codingseq augustus.cleaned.gff3 ../../$GENOME_NAME > augustus.cleaned.gff3.stats
+
+
+
 grep 'ExitStatus' Aug_*.e* | egrep ': [^0]'
 
 ## Clean Up.
@@ -500,8 +600,13 @@ rm -r PREDICTION/ tmp_opt_*/
 ## MAKER_PROTEIN
 #############################################
 
+./workflow_setup.sh maker_protein
+
+## This script should split your genome into parts and setup a directory for maker to run in.
 bash MAKER_PROTEIN_setup_maker_Batch.sh
-for var in SPLIT_MAKER_BATCH/*; do cd ${var}; pwd; qsub run_MAKER.sh; cd ../..; sleep 1; done
+
+## Submit each part to run.
+for var in CONTIGS_SPLIT/*; do cd ${var}; pwd; qsub run_MAKER.sh; cd ../..; sleep 1; done
 
 ## Combine output. 
 for var in CONTIGS_SPLIT/*_dir; do cd ${var}; echo ${var}; ${MAKER}/gff3_merge -d *.maker.output/*_master_datastore_index.log; cd ../..; done
@@ -509,6 +614,10 @@ for var in CONTIGS_SPLIT/*_dir; do cd ${var}; echo ${var}; ${MAKER}/fasta_merge 
 ls CONTIGS_SPLIT/*_dir/*.all.gff | xargs ${MAKER}/gff3_merge
 cat CONTIGS_SPLIT/*_dir/*.all.maker.proteins.fasta > genome.all.maker.proteins.fasta
 cat CONTIGS_SPLIT/*_dir/*.all.maker.transcripts.fasta > genome.all.maker.transcripts.fasta
+
+## WARNING: Check to make sure that the number of genes in the gff3 matches the number of genes in the *.proteins.fasta and *.transcripts.fasta
+##          The gff3_merge script can fail with a zero exit status and not give the correct number of genes. 
+
 
 
 # Get only MAKER predictions, ignore all other intermediate info. e.g. Repeatmasker gff.
@@ -532,19 +641,26 @@ awk '{ if($2=="maker")print $0 }' genome.all.gff > genome.all.maker.gff
 grep 'ExitStatus' MAKER_PROTEIN_*.e* | egrep ': [^0]'
 
 # Count finished MAKER jobs. Just to check. 
-grep 'Maker is now finished!!!' CONTIGS_SPLIT/*/maker.stderr | wc -l
+grep 'Maker is now finished!!!' CONTIGS_SPLIT/*/maker.log | wc -l
 
-grep -i 'error' CONTIGS_SPLIT/*_dir/maker.stderr | less ## Only if there is a problem. 
-grep -i 'warning' CONTIGS_SPLIT/*_dir/maker.stderr | less ## Expect some warnings. 
-grep -i 'warning' CONTIGS_SPLIT/*_dir/maker.stderr | grep -v 'Karlin-Altschul parameters' ## Can ignore these errors. 
-
+grep -i 'error' CONTIGS_SPLIT/*_dir/maker.log | less ## Only if there is a problem. 
+grep -i 'warning' CONTIGS_SPLIT/*_dir/maker.log | less ## Expect some warnings. 
+grep -i 'warning' CONTIGS_SPLIT/*_dir/maker.log | grep -v 'Karlin-Altschul parameters' ## Can ignore these errors. 
+grep -i 'Segmentation' CONTIGS_SPLIT/*_dir/maker.log | less
 
 # Print entries in MAKER datastore which are non-normal. 
-awk '!/FINISHED/ && !/STARTED/' SPLIT_MAKER_BATCH/*_dir/*.maker.output/*_master_datastore_index.log
+awk '!/FINISHED/ && !/STARTED/' CONTIGS_SPLIT/*_dir/*.maker.output/*_master_datastore_index.log
 
 cat CONTIGS_SPLIT/*_dir/*.maker.output/*_master_datastore_index.log | grep -c 'STARTED'
 cat CONTIGS_SPLIT/*_dir/*.maker.output/*_master_datastore_index.log | grep -c 'FINISHED'
 cat CONTIGS_SPLIT/*_dir/*.maker.output/*_master_datastore_index.log | wc -l
+
+
+## Clean Up.
+## You can either remove the CONTIGS_SPLIT directory or tar zip it incase you need it later. 
+## To make tar zipping this directory easier run the below script. 
+## It with take a while to run and will find and remove temp files produced by MAKER.
+python $SCRIPTS/cleanMAKER.py
 
 
 
@@ -553,31 +669,32 @@ cat CONTIGS_SPLIT/*_dir/*.maker.output/*_master_datastore_index.log | wc -l
 ## EvidenceModeler
 #############################################
 
+./workflow_setup.sh evidencemodeler
 
 # Remove Hash tag from GeneMark-ES gff file. 
-grep "^[^#]" genemark.gff3 > abinitio_gene_predictions.gff3 
+grep -v "^#" genemark.gff3 > abinitio_gene_predictions.gff3 
 
 # Remove Hash tags, blank line and update 2nd column 'SNAP'
-grep "^[^#]" snap.gff3 | sed '/^$/d' | awk '{print $1 "\tSNAP\t" $3 "\t" $4 "\t" $5 "\t" $6 "\t" $7 "\t" $8 "\t" $9}' >> abinitio_gene_predictions.gff3
+grep -v "^#" snap.gff3 | sed '/^$/d' | awk '{print $1 "\tSNAP\t" $3 "\t" $4 "\t" $5 "\t" $6 "\t" $7 "\t" $8 "\t" $9}' >> abinitio_gene_predictions.gff3
 
 # Convert AUGUSTUS gff3 to EVM compatible format. 
-${EVM_HOME}/EvmUtils/misc/augustus_GFF3_to_EVM_GFF3.pl augustus.gff3 | sed '/^$/d' >> abinitio_gene_predictions.gff3
+${EVIDENCEMODELER}/EvmUtils/misc/augustus_GFF3_to_EVM_GFF3.pl augustus.gff3 | sed '/^$/d' >> abinitio_gene_predictions.gff3
 
 # Add on MAKER gff features. 
 cat genome.all.maker.gff >> abinitio_gene_predictions.gff3
 
 # Remove Hash tag lines and blank lines. 
-grep "^[^#]" *.transdecoder.genome.gff3 | sed '/^$/d' >> abinitio_gene_predictions.gff3
+grep -v "^#" *.transdecoder.genome.gff3 | sed '/^$/d' >> abinitio_gene_predictions.gff3
+
+## For Polarella
+grep -v "^#" PASA_RNA-Seq.transdecoder.genome.gff3 | sed '/^$/d' | awk 'BEGIN{FS=OFS="\t"} $2="transdecoder_RNAseq"' >> abinitio_gene_predictions.gff3
+grep -v "^#" PASA_IsoSeq.transdecoder.forced_start.genome.gff3 | sed '/^$/d' | awk 'BEGIN{FS=OFS="\t"} $2="transdecoder_IsoSeq"' | sed -e 's/asmbl_/IsoSeq_asmbl_asmbl_/g' >> abinitio_gene_predictions.gff3
+
 
 
 # If it passes Validation without anything printed your .gff3 should be fine. 
-${EVM_HOME}/EvmUtils/gff3_gene_prediction_file_validator.pl abinitio_gene_predictions.gff3
+${EVIDENCEMODELER}/EvmUtils/gff3_gene_prediction_file_validator.pl abinitio_gene_predictions.gff3
 
-
-#################
-#### REPEATS ####
-grep "^[^#]" ${GENOME_NAME}.out.gff > repeats.gff3
-${EVM_HOME}/EvmUtils/gff3_gene_prediction_file_validator.pl repeats.gff3
 
 
 ## Set up weights.
@@ -585,7 +702,7 @@ vi evm_weights.txt
 ABINITIO_PREDICTION	GeneMark.hmm	2
 ABINITIO_PREDICTION	SNAP	2
 ABINITIO_PREDICTION	Augustus	6
-ABINITIO_PREDICTION	maker	8
+OTHER_PREDICTION	maker	8
 OTHER_PREDICTION	transdecoder	10
 
 
@@ -598,6 +715,10 @@ qsub run_EVidenceModeler.sh
 
 
 
+perl $SCRIPTS/GeneStats.pl ${GENOME_NAME}.evm.cds.fna ${GENOME_NAME}.evm.gff3 ${GENOME_NAME} > ${GENOME_NAME}.evm.gff3.stats
+
+
+
 # Combine all evm.out.log files from each scaffold.  
 cat PARTITIONS_EVM/*/evm.out.log > evm.out.combined.log
 
@@ -605,6 +726,7 @@ cat PARTITIONS_EVM/*/evm.out.log > evm.out.combined.log
 #### Count 'error' lines. 'Error with prediction:' lines are OK to ignore. Is caused when genes overlap and EVM tries to calculate intergenic regions, i.e. cant have space in between genes if genes overlap. 
 grep -i 'error' evm.out.combined.log | wc -l
 #### Count how many errors are OK to ignore.
+#### I think these errors are caused when a prediction method predicts two overlapping genes on different strands. 
 grep -i 'error' evm.out.combined.log | grep 'Error with prediction:' | wc -l
 
 #### Check for more known error. If anything turns up it needs to be fixed!!
@@ -613,24 +735,25 @@ grep -i 'VAR' evm.out.combined.log # Possible problem sorting gff features
 
 
 python $SCRIPTS/filter_EVM_files.py --evm_dir PARTITIONS_EVM/ --out filtered_EVM_predictions.txt
-python $SCRIPTS/load_EVM_to_SQLite3.py --gff scaffolds_len250kbp.fa.evm.gff3 --protein scaffolds_len250kbp.fa.evm.protein.faa --mrna scaffolds_len250kbp.fa.evm.cds.fna --sql_db $TMPDIR/EVM.gff.sqlite3
+python $SCRIPTS/load_EVM_to_SQLite3.py --gff ${GENOME_NAME}.evm.gff3 --protein ${GENOME_NAME}.evm.protein.faa --mrna ${GENOME_NAME}.evm.cds.fna --sql_db $TMPDIR/EVM.gff.sqlite3
 python $SCRIPTS/get_filtered_EVM_files.py --filter_file filtered_EVM_predictions.txt --sql_db $TMPDIR/EVM.gff.sqlite3 --gff_out evm.filtered.gff --protein_out evm.filtered.protein.fasta --mrna_out evm.filtered.mRNA.fasta
 
+## Visualization is always helpful. This command adds colors to the different evidence types, this can then be loaded into IGV along with the predicited genes for visual inspection.  
+cat abinitio_gene_predictions.gff3 | awk '{ if ($2=="GeneMark.hmm") {print $0 ";color=#800080"} else if ($2=="SNAP") {print $0 ";color=#008000"} else if ($2=="Augustus") {print $0 ";color=#0000FF"} else if ($2=="maker") {print $0 ";color=#000000"} else if ($2=="transdecoder") {print $0 ";color=#FF0000"} }' > abinitio_gene_predictions.color.gff3
+$BEDTOOLS/bedtools sort -i abinitio_gene_predictions.color.gff3 > abinitio_gene_predictions.color.sorted.gff3
 
 
 
+## For Polarella
+python ../filter_EVM_files.py --evm_dir PARTITIONS_EVM/ --out filtered_EVM_predictions.txt
+python $SCRIPTS/load_EVM_to_SQLite3.py --gff ${GENOME_NAME}.evm.gff3 --protein ${GENOME_NAME}.evm.protein.faa --mrna ${GENOME_NAME}.evm.cds.fna --sql_db $TMPDIR/EVM.gff.sqlite3
+python $SCRIPTS/get_filtered_EVM_files.py --filter_file filtered_EVM_predictions.txt --sql_db $TMPDIR/EVM.gff.sqlite3 --gff_out evm.filtered.gff --protein_out evm.filtered.protein.fasta --mrna_out evm.filtered.mRNA.fasta
+
+perl $SCRIPTS/GeneStats.pl evm.filtered.mRNA.fasta evm.filtered.gff $GENOME_NAME > evm.filtered.gff.stats
 
 
 
-
-
-
-
-
-
-
-
-
+cat abinitio_gene_predictions.gff3 | awk '{ if ($2=="GeneMark.hmm") {print $0 ";color=#800080"} else if ($2=="Augustus") {print $0 ";color=#0000FF"} else if ($2=="maker") {print $0 ";color=#000000"} else if ($2=="transdecoder_RNAseq") {print $0 ";color=#FF0000"} else if ($2=="transdecoder_IsoSeq") {print $0 ";color=#FFC0CB"}}' > abinitio_gene_predictions.color.gff3
 
 
 

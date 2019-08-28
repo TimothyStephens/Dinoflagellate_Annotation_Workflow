@@ -1,7 +1,7 @@
 
+source ../../../env.sh
 export PATH=$PATH:${MAKER}
 export MPI_BLASTDB=__MPI_DB__/mpi_blastdb
-source ../../../env.sh
 
 cd $PBS_O_WORKDIR
 cp -Hr * $TMPDIR

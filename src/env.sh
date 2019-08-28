@@ -40,7 +40,7 @@ export GENOME_SIZE=
 ###############
 export DATABASES=/shares/common/groups/Group-Ragan/Dinoflagellate_Annotation_Workflow/databases
 export UNIVEC=${DATABASES}/UNIVEC/BUILD_10.0/UniVec_Core
-export BLASTX_PROTEIN_DB=${DATABASES}/REFSEQ_88_COMPLETE_SYM_PEP/RefSeq_complete_88.faa
+export BLAST_PROTEIN_DB=${DATABASES}/REFSEQ_88_COMPLETE_SYM_PEP/RefSeq_complete_88.faa
 export PROTEINS_4_PREDICTION=${DATABASES}/SwissProt27062018_SymPep/SwissProt_SymPep.fasta
 export TRANSPOSON_DB_HHBLITS=${DATABASES}/transposon_db_hhblits/transposons
 
@@ -52,7 +52,7 @@ export TRANSPOSON_DB_HHBLITS=${DATABASES}/transposon_db_hhblits/transposons
 export PROGRAMS=/shares/common/groups/Group-Ragan/Dinoflagellate_Annotation_Workflow/programs
 export SCRIPTS=/shares/common/groups/Group-Ragan/Dinoflagellate_Annotation_Workflow/scripts
 
-#export AUGUSTUS=${PROGRAMS}/augustus-3.1-modified
+export AUGUSTUS=${PROGRAMS}/augustus-3.3.1-modified
 export BBMAP=${PROGRAMS}/bbmap
 export BEDTOOLS=/opt/Modules/bedtools2/2.24.0 # Avalible on most systems
 export BLAST=/opt/Modules/blast+/2.4.0/bin # Avalible on most systems
@@ -65,12 +65,12 @@ export EMBOSS=${PROGRAMS}/EMBOSS-6.6.0/bin
 export EVIDENCEMODELER=${PROGRAMS}/EVidenceModeler-1.1.1-modified
 export GENEMARK=${PROGRAMS}/gm_et_linux_64/gmes_petap
 export GMAP=${PROGRAMS}/gmap-2018-07-04/bin
-export PREPARE_GOLDEN=${PROGRAMS}/Prepare_Golden_Genes
-export JAMG_PATH=${PROGRAMS}/JAMg
 export HHSUITE=${PROGRAMS}/hhsuite-2.0.16-linux-x86_64/bin
+export JAMG_PATH=${PROGRAMS}/JAMg
 export JELLYFISH=${PROGRAMS}/Jellyfish-2.2.10/bin
-#export MAKER=${PROGRAMS}/maker/bin
+export MAKER=${PROGRAMS}/maker-2.31.10-modified/bin
 export PASA=${PROGRAMS}/PASApipeline-v2.3.3-modified
+export PREPARE_GOLDEN=${PROGRAMS}/Prepare_Golden_Genes
 export REPEATMODELER=${PROGRAMS}/RepeatModeler-open-1.0.11
 export REPEATMASKER=${PROGRAMS}/RepeatMasker-open-4-0-7
 export SALMON=${PROGRAMS}/Salmon-0.9.1/bin
@@ -81,8 +81,6 @@ export TRINITY=${PROGRAMS}/Trinity-v2.6.6
 
 
 
-export AUGUSTUS=~/PROGRAMS/augustus-3.1-modified
-export MAKER=~/PROGRAMS/maker-modified/bin
 
 
 

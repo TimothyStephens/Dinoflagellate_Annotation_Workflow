@@ -5,6 +5,7 @@ export PATH=${TRINITY}:$PATH
 export PATH=${BOWTIE2}:$PATH
 export PATH=${JELLYFISH}:$PATH
 export PATH=${SALMON}:$PATH
+export PATH=${SAMTOOLS}:$PATH
 
 # Assemble transcripts De novo (DN)
 run_cmd "Trinity --seqType fq --max_memory ${MEMORY} --SS_lib_type RF --left ${TRANSCRIPTOME_READS_1} --right ${TRANSCRIPTOME_READS_2} --output TrinityDN --CPU ${NCPUS} --trimmomatic --verbose > TrinityDN.log"

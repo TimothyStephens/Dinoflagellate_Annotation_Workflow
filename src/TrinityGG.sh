@@ -9,7 +9,7 @@ export PATH=${SAMTOOLS}:$PATH
 
 ## Align reads using Bowtie2
 run_cmd "bowtie2-build ${GENOME_NAME} ${GENOME_NAME}"
-run_cmd "bowtie2 --very-sensitive-local --no-unal --rf -x ${GENOME_NAME} -1 ${TRANSCRIPTOME_READS_1} -2 ${TRANSCRIPTOME_READS_2} -S ${GENOME_NAME}.bowtie2.readsmapped.sam --threads ${NCPUS}"
+run_cmd "bowtie2 --very-sensitive-local --rf -x ${GENOME_NAME} -1 ${TRANSCRIPTOME_READS_1} -2 ${TRANSCRIPTOME_READS_2} -S ${GENOME_NAME}.bowtie2.readsmapped.sam --threads ${NCPUS}"
 
 ## Sort sam file using samtools
 run_cmd "samtools view -@ ${NCPUS} -b ${GENOME_NAME}.bowtie2.readsmapped.sam | samtools sort -@ ${NCPUS} - > ${GENOME_NAME}.bowtie2.readsmapped.sorted.bam"
