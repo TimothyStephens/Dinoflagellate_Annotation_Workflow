@@ -13,7 +13,7 @@ export PATH=${GMAP}:$PATH
 export PERL5LIB=${PREPARE_GOLDEN}/PerlLib/:$PERL5LIB
 export PATH=${PREPARE_GOLDEN}:$PATH
 
-${PREPARE_GOLDEN}/prepare_golden_genes_for_predictors_GA_DonorSite.pl \
+perl ${PREPARE_GOLDEN}/prepare_golden_genes_for_predictors_GA_DonorSite.pl \
         -genome ${GENOME_NAME}.masked \
         -softmasked ${GENOME_NAME}.softmasked \
         -no_gmap -same_species -intron $MAX_INTRON_LENGTH -cpu $NCPUS -norefine -complete -no_single -verbose \

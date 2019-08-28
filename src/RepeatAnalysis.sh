@@ -8,11 +8,11 @@ run_cmd "cp ${GENOME_NAME} ${TMPDIR}"
 run_cmd "cd ${TMPDIR}"
 
 # Run Modeler
-run_cmd "${REPEATMODELER}/BuildDatabase -name ${GENOME_NAME}_db -engine ncbi ${GENOME_NAME} > BuildDatabase.out"
-run_cmd "${REPEATMODELER}/RepeatModeler -engine ncbi -pa ${NCPUS} -database ${GENOME_NAME}_db 1> RepeatModeler.sdtout 2> RepeatModeler.sdterr"
+run_cmd "perl ${REPEATMODELER}/BuildDatabase -name ${GENOME_NAME}_db -engine ncbi ${GENOME_NAME} > BuildDatabase.out"
+run_cmd "perl ${REPEATMODELER}/RepeatModeler -engine ncbi -pa ${NCPUS} -database ${GENOME_NAME}_db 1> RepeatModeler.sdtout 2> RepeatModeler.sdterr"
 
 # Combine repeat modeler and repeat masker libraries.
-run_cmd "${REPEATMASKER}/util/buildRMLibFromEMBL.pl ${REPEATMASKER}/Libraries/RepeatMaskerLib.embl > RepeatMasker.lib"
+run_cmd "perl ${REPEATMASKER}/util/buildRMLibFromEMBL.pl ${REPEATMASKER}/Libraries/RepeatMaskerLib.embl > RepeatMasker.lib"
 run_cmd "cp RM_*/consensi.fa* ."
 run_cmd "cat consensi.fa.classified RepeatMasker.lib > ${GENOME_NAME}_CombinedRepeatLib.lib"
 
@@ -26,7 +26,7 @@ run_cmd "cd ${PBS_O_WORKDIR}"
 ## If you wish to run Repeat Masker without a custom repeat database comment out the above
 ## Repeat Modeler commands and remove the "-lib ${GENOME_NAME}_CombinedRepeatLib.lib" option 
 ## from the Repeat Masker command below. 
-run_cmd "${REPEATMASKER}/RepeatMasker -lib ${GENOME_NAME}_CombinedRepeatLib.lib -e ncbi -gff -x -no_is -a -pa ${NCPUS} ${GENOME_NAME} 1> RepeatMasker.sdtout 2> RepeatMasker.sdterr"
+run_cmd "perl ${REPEATMASKER}/RepeatMasker -lib ${GENOME_NAME}_CombinedRepeatLib.lib -e ncbi -gff -x -no_is -a -pa ${NCPUS} ${GENOME_NAME} 1> RepeatMasker.sdtout 2> RepeatMasker.sdterr"
 
 # SoftMask Genome
 run_cmd "${BEDTOOLS}/maskFastaFromBed -soft -fi ${GENOME_NAME} -fo ${GENOME_NAME}.softmasked -bed ${GENOME_NAME}.out.gff"
