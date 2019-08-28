@@ -2,7 +2,6 @@ source ../env.sh
 
 #Recommend 8 cpus
 export AUGUSTUS_CONFIG_PATH=${AUGUSTUS}/config
-export PERL5LIB=~/perl5/lib/perl5
 export PATH=$PATH:${AUGUSTUS}/bin/
 
 # the following will train the coding sequence models. The --metapars must point to a valid configuration which you can change if you want.

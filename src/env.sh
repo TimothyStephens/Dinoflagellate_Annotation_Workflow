@@ -13,8 +13,8 @@
 ## Variables ##
 ###############
 
-export GENOME_NAME=scaffolds_minlen1kbp.fa # Name of genome file.
-export PREFIX=Test_Run #Prefix to use for job names
+export GENOME_NAME=scaffolds.fa # Name of genome file.
+export PREFIX=Test #Prefix to use for job names
 
 export SPECIES=$PREFIX # Species for Augustus
 
@@ -38,7 +38,7 @@ export GENOME_SIZE=
 ###############
 ## Databases ##
 ###############
-export DATABASES=/shares/common/groups/Group-Ragan/Dinoflagellate_Annotation_Workflow/databases
+export DATABASES=/path/to/Dinoflagellate_Annotation_Workflow/databases
 export UNIVEC=${DATABASES}/UNIVEC/BUILD_10.0/UniVec_Core
 export BLAST_PROTEIN_DB=${DATABASES}/REFSEQ_88_COMPLETE_SYM_PEP/RefSeq_complete_88.faa
 export PROTEINS_4_PREDICTION=${DATABASES}/SwissProt27062018_SymPep/SwissProt_SymPep.fasta
@@ -49,13 +49,13 @@ export TRANSPOSON_DB_HHBLITS=${DATABASES}/transposon_db_hhblits/transposons
 ##############
 ## Programs ##
 ##############
-export PROGRAMS=/shares/common/groups/Group-Ragan/Dinoflagellate_Annotation_Workflow/programs
-export SCRIPTS=/shares/common/groups/Group-Ragan/Dinoflagellate_Annotation_Workflow/scripts
+export PROGRAMS=/path/to/Dinoflagellate_Annotation_Workflow/programs
+export SCRIPTS=/path/to/Dinoflagellate_Annotation_Workflow/scripts
 
 export AUGUSTUS=${PROGRAMS}/augustus-3.3.1-modified
 export BBMAP=${PROGRAMS}/bbmap
-export BEDTOOLS=/opt/Modules/bedtools2/2.24.0 # Avalible on most systems
-export BLAST=/opt/Modules/blast+/2.4.0/bin # Avalible on most systems
+export BEDTOOLS=${PROGRAMS}/bedtools2/2.24.0 ## Avalible on most systems
+export BLAST=${PROGRAMS}/blast+/2.4.0/bin ## Avalible on most systems
 export BLAT=${PROGRAMS}/blat_v36x2
 export BLASTALL=${PROGRAMS}/blast-2.2.26/bin
 export BOWTIE2=${PROGRAMS}/bowtie2-2.3.4.1-linux-x86_64
@@ -74,7 +74,7 @@ export PREPARE_GOLDEN=${PROGRAMS}/Prepare_Golden_Genes
 export REPEATMODELER=${PROGRAMS}/RepeatModeler-open-1.0.11
 export REPEATMASKER=${PROGRAMS}/RepeatMasker-open-4-0-7
 export SALMON=${PROGRAMS}/Salmon-0.9.1/bin
-export SAMTOOLS=/opt/Modules/samtools/1.3/bin # Avalible on most systems
+export SAMTOOLS=${PROGRAMS}/samtools/1.3/bin ## Avalible on most systems
 export SNAP=${PROGRAMS}/SNAP_ret20Jul2018
 export TRANSPOSON_PSI=${PROGRAMS}/TransposonPSI_modified
 export TRINITY=${PROGRAMS}/Trinity-v2.6.6
