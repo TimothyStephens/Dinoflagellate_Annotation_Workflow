@@ -430,6 +430,8 @@ xargs ${SAMTOOLS}/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.t
 ## mem=1GB
 ## Walltime=00:00:04
 
+Run run_CD_HIT.sh
+
 # File containing protein seqs which are representative of each cluster. 
 # *.filtered_final.cdhit75
 
