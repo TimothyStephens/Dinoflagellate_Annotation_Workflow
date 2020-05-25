@@ -265,7 +265,7 @@ cat ../TRINITY_DN/Trinity-DN.fasta | ${PASA}/misc_utilities/accession_extractor.
 qsub run_PASA.sh
 
 
-perl $SCRIPTS/GeneStats.pl ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.genome.gff3 ${GENOME_NAME} > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds.stats
+perl ${SCRIPTS}/GeneStats.pl ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.genome.gff3 ${GENOME_NAME} > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.cds.stats
 
 #### Recommend CladeC1
 ## cpus=8
@@ -298,13 +298,13 @@ awk '$3=="mRNA"{print $0}' ../PASA/${GENOME_NAME}_pasadb.sqlite.assemblies.fasta
 
 ## Get seq IDs that are NOT Single Exon genes, have genome coords, and are type complete. 
 ## The later GoldenGenes stage will filter these genes anyway so we might as well filter them out now before the intensive blast stage. 
-python $SCRIPTS/filter_ids.py -i Complete_Sequences.ids -o Complete_Sequences.ids.filtered -k Genes_with_genome_coords.ids -r Single_CDS_Genes.ids
+python ${SCRIPTS}/filter_ids.py -i Complete_Sequences.ids -o Complete_Sequences.ids.filtered -k Genes_with_genome_coords.ids -r Single_CDS_Genes.ids
 
 
 ## Get pep sequences in filtered ID list
 xargs $SAMTOOLS/samtools faidx ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep < Complete_Sequences.ids.filtered > ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered
 mkdir FASTA_SPLIT
-perl $SCRIPTS/fasta-splitter.pl --n-parts 50 --out-dir FASTA_SPLIT ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered
+perl ${SCRIPTS}/fasta-splitter.pl --n-parts 50 --out-dir FASTA_SPLIT ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered
 ls -1 FASTA_SPLIT/*.filtered > files2run.txt
 
 
@@ -415,7 +415,7 @@ cat *.TPSI.allHits | awk '{ print $5 }' | sort | uniq > TransposonPSI.hit.seq.id
 # Get seq IDs that do NOT HAVE Transposon_PSI, HHBLITS Hits and are NOT Single Exon. 
 # This script removes IDs which are in the HHBLITs, Transposon-PSI and Single Exon files. 
 grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete_only.filtered.top_coverage.faa | sed -e 's/>//' > Seqs_from_blast.ids
-python $SCRIPTS/filter_ids.py -i Seqs_from_blast.ids -o Seqs_from_blast.ids.filtered -r ../HHBLITS/HHBLITS.hit.seq.ids,../TRANSPOSON_PSI/TransposonPSI.hit.seq.ids
+python ${SCRIPTS}/filter_ids.py -i Seqs_from_blast.ids -o Seqs_from_blast.ids.filtered -r ../HHBLITS/HHBLITS.hit.seq.ids,../TRANSPOSON_PSI/TransposonPSI.hit.seq.ids
 
 #Cluster Proteins at 75%
 # Get peptide sequences which do not have transposon hits. 
@@ -451,7 +451,7 @@ grep '>' ${GENOME_NAME}_pasadb.sqlite.assemblies.fasta.transdecoder.pep.complete
 ## the same format as you would expect from PASA. This seems to be required by the 
 ## prepare_golden_genes script for some reason.
 ## This script might not work with different versions of PASA if the seq names are in a different format.
-python $SCRIPTS/get_PASA_for__prepare_golden_genes.py --ids CD-HIT.ids.txt --pasa_assembly ../PASA/*.assemblies.fasta --pasa_cds ../PASA/*.assemblies.fasta.transdecoder.cds --pasa_peptides ../PASA/*.assemblies.fasta.transdecoder.pep --pasa_gff ../PASA/*.assemblies.fasta.transdecoder.gff3 --pasa_genome ../PASA/*.assemblies.fasta.transdecoder.genome.gff3
+python ${SCRIPTS}/get_PASA_for__prepare_golden_genes.py --ids CD-HIT.ids.txt --pasa_assembly ../PASA/*.assemblies.fasta --pasa_cds ../PASA/*.assemblies.fasta.transdecoder.cds --pasa_peptides ../PASA/*.assemblies.fasta.transdecoder.pep --pasa_gff ../PASA/*.assemblies.fasta.transdecoder.gff3 --pasa_genome ../PASA/*.assemblies.fasta.transdecoder.genome.gff3
 
 
 qsub run_GoldenGenes.sh
@@ -493,7 +493,7 @@ qsub run_GeneMark-ES.sh
 
 perl ~/PROGRAMS/Dinoflagellate_Annotation_Workflow/programs/EVidenceModeler-1.1.1-modified/EvmUtils/gff3_file_to_proteins.pl genemark.gff3 ../CCMP1383_scaffolds.fa CDS > genemark.cds.fa
 sed -e 's/:/./g' genemark.gff3 > genemark.cleaned.gff3
-perl $SCRIPTS/GeneStats.pl genemark.cds.fa genemark.cleaned.gff3 ../CCMP1383_scaffolds.fa > genemark.cds.fa.stats
+perl ${SCRIPTS}/GeneStats.pl genemark.cds.fa genemark.cleaned.gff3 ../CCMP1383_scaffolds.fa > genemark.cds.fa.stats
 
 
 ## Clean Up.
@@ -528,7 +528,7 @@ cat PREDICT/${GENOME_NAME}.softmasked_dir/*.softmasked.snap.gff3.stderr ## Expec
 
 
 perl ~/PROGRAMS/Dinoflagellate_Annotation_Workflow/programs/EVidenceModeler-1.1.1-modified/EvmUtils/gff3_file_to_proteins.pl snap.gff3 CCMP1383_scaffolds.fa.softmasked CDS > snap.cds.fa
-perl $SCRIPTS/GeneStats.pl snap.cds.fa snap.gff3 CCMP1383_scaffolds.fa.softmasked > snap.cds.fa.stats
+perl ${SCRIPTS}/GeneStats.pl snap.cds.fa snap.gff3 CCMP1383_scaffolds.fa.softmasked > snap.cds.fa.stats
 
 ## Clean Up.
 rm -r ${GENOME_NAME}.softmasked_dir/
@@ -563,7 +563,7 @@ codingseq on
 print_utr on
 
 mkdir FASTA_SPLIT
-perl $SCRIPTS/fasta-splitter.pl --n-parts 100 --out-dir FASTA_SPLIT ${GENOME_NAME}.softmasked
+perl ${SCRIPTS}/fasta-splitter.pl --n-parts 100 --out-dir FASTA_SPLIT ${GENOME_NAME}.softmasked
 ls -1 FASTA_SPLIT/* > files2run.txt
 
 qsub run_Augustus_Prediction.sh
@@ -587,7 +587,7 @@ perl ${AUGUSTUS}/scripts/getAnnoFasta.pl augustus.gff3
 
 perl ${EVIDENCEMODELER}/EvmUtils/misc/augustus_GFF3_to_EVM_GFF3.pl augustus.gff3 | sed '/^$/d' > augustus.cleaned.gff3
 
-perl $SCRIPTS/GeneStats.pl augustus3.codingseq augustus.cleaned.gff3 ../../$GENOME_NAME > augustus.cleaned.gff3.stats
+perl ${SCRIPTS}/GeneStats.pl augustus3.codingseq augustus.cleaned.gff3 ../../$GENOME_NAME > augustus.cleaned.gff3.stats
 
 
 
@@ -662,7 +662,7 @@ cat CONTIGS_SPLIT/*_dir/*.maker.output/*_master_datastore_index.log | wc -l
 ## You can either remove the CONTIGS_SPLIT directory or tar zip it incase you need it later. 
 ## To make tar zipping this directory easier run the below script. 
 ## It with take a while to run and will find and remove temp files produced by MAKER.
-python $SCRIPTS/cleanMAKER.py
+python ${SCRIPTS}/cleanMAKER.py
 
 
 
@@ -717,7 +717,7 @@ qsub run_EVidenceModeler.sh
 
 
 
-perl $SCRIPTS/GeneStats.pl ${GENOME_NAME}.evm.cds.fna ${GENOME_NAME}.evm.gff3 ${GENOME_NAME} > ${GENOME_NAME}.evm.gff3.stats
+perl ${SCRIPTS}/GeneStats.pl ${GENOME_NAME}.evm.cds.fna ${GENOME_NAME}.evm.gff3 ${GENOME_NAME} > ${GENOME_NAME}.evm.gff3.stats
 
 
 
@@ -736,9 +736,9 @@ grep -i 'alignment gap has misordered coords' evm.out.combined.log # gff format 
 grep -i 'VAR' evm.out.combined.log # Possible problem sorting gff features
 
 
-python $SCRIPTS/filter_EVM_files.py --evm_dir PARTITIONS_EVM/ --out filtered_EVM_predictions.txt
-python $SCRIPTS/load_EVM_to_SQLite3.py --gff ${GENOME_NAME}.evm.gff3 --protein ${GENOME_NAME}.evm.protein.faa --mrna ${GENOME_NAME}.evm.cds.fna --sql_db $TMPDIR/EVM.gff.sqlite3
-python $SCRIPTS/get_filtered_EVM_files.py --filter_file filtered_EVM_predictions.txt --sql_db $TMPDIR/EVM.gff.sqlite3 --gff_out evm.filtered.gff --protein_out evm.filtered.protein.fasta --mrna_out evm.filtered.mRNA.fasta
+python ${SCRIPTS}/filter_EVM_files.py --evm_dir PARTITIONS_EVM/ --out filtered_EVM_predictions.txt
+python ${SCRIPTS}/load_EVM_to_SQLite3.py --gff ${GENOME_NAME}.evm.gff3 --protein ${GENOME_NAME}.evm.protein.faa --mrna ${GENOME_NAME}.evm.cds.fna --sql_db $TMPDIR/EVM.gff.sqlite3
+python ${SCRIPTS}/get_filtered_EVM_files.py --filter_file filtered_EVM_predictions.txt --sql_db $TMPDIR/EVM.gff.sqlite3 --gff_out evm.filtered.gff --protein_out evm.filtered.protein.fasta --mrna_out evm.filtered.mRNA.fasta
 
 ## Visualization is always helpful. This command adds colors to the different evidence types, this can then be loaded into IGV along with the predicited genes for visual inspection.  
 cat abinitio_gene_predictions.gff3 | awk '{ if ($2=="GeneMark.hmm") {print $0 ";color=#800080"} else if ($2=="SNAP") {print $0 ";color=#008000"} else if ($2=="Augustus") {print $0 ";color=#0000FF"} else if ($2=="maker") {print $0 ";color=#000000"} else if ($2=="transdecoder") {print $0 ";color=#FF0000"} }' > abinitio_gene_predictions.color.gff3
@@ -748,10 +748,10 @@ $BEDTOOLS/bedtools sort -i abinitio_gene_predictions.color.gff3 > abinitio_gene_
 
 ## For Polarella
 python ../filter_EVM_files.py --evm_dir PARTITIONS_EVM/ --out filtered_EVM_predictions.txt
-python $SCRIPTS/load_EVM_to_SQLite3.py --gff ${GENOME_NAME}.evm.gff3 --protein ${GENOME_NAME}.evm.protein.faa --mrna ${GENOME_NAME}.evm.cds.fna --sql_db $TMPDIR/EVM.gff.sqlite3
-python $SCRIPTS/get_filtered_EVM_files.py --filter_file filtered_EVM_predictions.txt --sql_db $TMPDIR/EVM.gff.sqlite3 --gff_out evm.filtered.gff --protein_out evm.filtered.protein.fasta --mrna_out evm.filtered.mRNA.fasta
+python ${SCRIPTS}/load_EVM_to_SQLite3.py --gff ${GENOME_NAME}.evm.gff3 --protein ${GENOME_NAME}.evm.protein.faa --mrna ${GENOME_NAME}.evm.cds.fna --sql_db $TMPDIR/EVM.gff.sqlite3
+python ${SCRIPTS}/get_filtered_EVM_files.py --filter_file filtered_EVM_predictions.txt --sql_db $TMPDIR/EVM.gff.sqlite3 --gff_out evm.filtered.gff --protein_out evm.filtered.protein.fasta --mrna_out evm.filtered.mRNA.fasta
 
-perl $SCRIPTS/GeneStats.pl evm.filtered.mRNA.fasta evm.filtered.gff $GENOME_NAME > evm.filtered.gff.stats
+perl ${SCRIPTS}/GeneStats.pl evm.filtered.mRNA.fasta evm.filtered.gff $GENOME_NAME > evm.filtered.gff.stats
 
 
 
