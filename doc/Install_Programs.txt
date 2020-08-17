@@ -307,7 +307,7 @@ cp -r JAMg/PerlLib Prepare_Golden_Genes/
 ## Next make the changes to each script detailed in Mods_to_programs.sh
 
 ## Check it works
-
+./prepare_golden_genes_for_predictors_GA_DonorSite.pl
 
 
 
