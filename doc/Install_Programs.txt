@@ -298,7 +298,7 @@ date > JAMg/date_retrieved.txt
 
 ## You now have to modify the prepare_golden_genes_for_predictors.pl script
 ## provided by JAMg so it recognises GA acceptor sites.
-## The easiest, cleanes and most portable approach is to copy these files into a clean directory.
+## The easiest, cleanest and most portable approach is to copy these files into a clean directory.
 mkdir Prepare_Golden_Genes
 cp JAMg/date_retrieved.txt Prepare_Golden_Genes/
 cp JAMg/bin/prepare_golden_genes_for_predictors.pl Prepare_Golden_Genes/prepare_golden_genes_for_predictors_GA_DonorSite.pl
