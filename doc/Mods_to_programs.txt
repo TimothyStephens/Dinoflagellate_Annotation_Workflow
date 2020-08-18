@@ -873,8 +873,8 @@ my $check_donor = ($donor =~ /gt|gc|ga/i); # add GA-AG for Dinoflagellates. TGS
 
 
 
-## Some perl module scripts have not been changes to recognize GA-AG sites.
-## Likely not an issue as they will liekly not be used in the standard annotation procedure. 
+## Some perl module scripts have not been changed to recognize GA-AG sites.
+## Likely not an issue as they will likely not be used in the standard annotation procedure. 
 ./PerlLib/CIGAR.pm
 ./PerlLib/GTF.pm
 ./PasaWeb/*
