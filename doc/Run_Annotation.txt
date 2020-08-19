@@ -3,18 +3,18 @@
 ## 
 ## 
 ## NOTE:
-##      - Transcriptome reads need to be cleaned (free of adapters) before being feed into this workflow
-##      - Files obviously can't have special characters
-##	- This workflow makes use of job arrays. If the system does not support job arrays or job arrays with upto several 
-##		hundred elements, some of the steps in the workflow will have to be modified. This should however be extreamly easy.
+##      - Transcriptome reads need to be cleaned (free of adapters) before being fed into this workflow
+##      - Files shouldn't have special characters
+##	- This workflow makes use of job arrays. If the system does not support job arrays or job arrays with up to several 
+##		hundred elements, some of the steps in the workflow will have to be modified. This should be easy to adjust.
 ## 
 ## 
 ## TODO:
 ## 	- Modify Genemark to accept donor sites other than GT. It is writen mainly in perl (and some C++) but the 
-## 		GT donor site is hard coded in to all scripts. Not exactly sure how you would go about fixing this/if  
-## 		it is even possible (too hard coded in). 
-## 	- Modify SNAP to accept donor sites other than GT. Coded in C++ so it will take a better coder than me to do it. 
-## 	- TrinityDN does not easily take unpaired reads. (Can not take unpaired data if the data is strand specific)
+## 		GT donor site is hard-coded into all scripts. Not exactly sure how you would go about fixing this/if  
+## 		it is even possible. 
+## 	- Modify SNAP to accept donor sites other than GT (coded in C++). 
+## 	- TrinityDN does not easily take unpaired reads (cannot take unpaired data if the data is strand-specific)
 ## 
 ## 
 ## 
@@ -23,7 +23,7 @@
 ## 1c. TrinityDN
 ## 2. SeqClean
 ## 3. BLASTX
-## 4. 
+## 4.
 ## 
 ## 
 ##        Genome Sequence                          RNA-Seq
@@ -76,11 +76,11 @@
 #############################################
 ## 
 ## 
-## NOTE:
-##      - Can not have | chanracters in genome sequence names (will break downstream analysis i.e. GoldenSet and EVM)
-##      - Genome names >50 characters my also result in errors
-##	- ATGCN characters only in genome.
-##      - Scaffolds <1000 bp will not be worth annotation plus they will slow down the process
+## NOTES:
+##      - Cannot have "|" characters in genome sequence names (will break downstream analysis, i.e. GoldenSet and EVM)
+##      - Genome names >50 characters may also result in errors
+##	- ATGCN characters only in genome sequences
+##      - Scaffolds <1000 bp are not worth of annotation and will slow down the process
 ## 
 ## 
 ## Create a new directory to do the annotation. Copy over the env.sh and softlink the wotkflow_setup.sh
