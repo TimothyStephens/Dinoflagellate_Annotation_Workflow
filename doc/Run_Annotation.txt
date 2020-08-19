@@ -83,9 +83,10 @@
 ##      - Scaffolds <1000 bp are not worth of annotation and will slow down the process
 ## 
 ## 
-## Create a new directory to do the annotation. Copy over the env.sh and softlink the wotkflow_setup.sh
+## Create a new directory to do the annotation. Copy over the env.sh and softlink the workflow_setup.sh
 ## files from the src directory distributed with this document. To setup the workflow run "workflow_setup.sh all"
 ## or run the workflow_setup.sh script with other options to create each job as you need them.
+## Modify the variables in env.sh according to your files and paths to programs to use.
 source env.sh
 
 
