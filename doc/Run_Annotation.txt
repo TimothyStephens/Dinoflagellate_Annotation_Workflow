@@ -160,7 +160,8 @@ rm -r TrinityGG/ ${GENOME_NAME}.*
 #############################################
 ## 
 ## Make sure the correct strandedness '--SS_lib_type' is set for your library.
-## If your library is not strended remove this options completely. 
+## If your library is not stranded remove these options completely.
+
 ./workflow_setup.sh trinitydn
 qsub run_TrinityDN.sh
 
