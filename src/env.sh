@@ -19,7 +19,7 @@ export PREFIX=Test #Prefix to use for job names
 export SPECIES=$PREFIX # Species for Augustus
 
 ## Transcript data
-# Comma seperate multiple read file (fill path). Multiple fwd/rev datasets must corrospond in comma seperated list.
+# Comma seperate multiple read file (full path). Multiple fwd/rev datasets must corrospond in comma seperated list.
 # Fwd/Rev & single reads.
 export TRANSCRIPTOME_READS_1=/path/to/reads/Paired_R1.fastq.gz
 export TRANSCRIPTOME_READS_2=/path/to/reads/Paired_R2.fastq.gz
