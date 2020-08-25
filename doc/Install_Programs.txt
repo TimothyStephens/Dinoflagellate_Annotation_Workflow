@@ -1,10 +1,24 @@
 
-## This is an attemp to document the steps required to install all programs used in the Dino annotation workflow
+This is an attemp to document the steps required to install all programs used in the Dinoflagellate Annotation Workflow.
+Any modifications done to the programs will also be documented and examples of the modified code will often be provided 
+(see doc/Mods_to_programs.txt for more information).
 
-## Any modifications done to the programs will also be documented and the modified code will often be provided.
+The Dinoflagellate Annotation Workflow was developed using the versions of the programs shown below. 
+It is recommended that users install the latest version of each program, which might mean that the 
+installation instructions for a given program might differ from what is written in this document. 
+If you find a problem/incompatibility between the workflow and a given version of a program please 
+let us know by opening up an issue on GitHub.
+
+Some programs such as Trinity, maker, RepeatMasker, and RepeatModeler have a long list of dependencies. 
+Please be aware that some of these programs require very specific versions of other tools to be installed 
+for them to work correctly (e.g. RepeatMasker and RepeatModeler). Please read the installation instructions 
+for each of these programs first and use the installation instructions in this document as a general 
+guide if you need help. 
+
+
 
 Programs used:
-	Augustus v3.3.1
+	Augustus v3.3.1 (modified, see doc/Mods_to_programs.txt)
 	Bamtools v2.4.1 (any version should be fine)
 	BBmap v38.08 (any version should be fine)
 	Bedtools v2.24.0 (any version usually avalible on all systems already)
@@ -14,13 +28,14 @@ Programs used:
 	Bowtie2 v2.3.4.1
 	CD-HIT v4.6.8
 	cdbfasta v1
+	EVidenceModeler v1.1.1 (modified, see doc/Mods_to_programs.txt)
 	Genemark-ES/ET v4.32
 	hhsuite v3.0-beta.3
-	JAMg release 01Jul2018
+	JAMg release 01Jul2018 (modified, see doc/Mods_to_programs.txt)
 	Jellyfish v2.2.10
-	maker v2.31.10
+	maker v2.31.10 (modified, see doc/Mods_to_programs.txt)
 	NSEG
-	PASA v2.3.3 (SQLite compatable)
+	PASA v2.3.3 (SQLite compatable; modified, see doc/Mods_to_programs.txt)
 	RECON v1.08
 	RepeatMasker v4-0-7
 	RepeatModeler v1.0.11
@@ -501,30 +516,6 @@ mv ncbi-blast-2.2.28+ rmblast-2.2.28
 
 ## Check it works
 ./rmblast-2.2.28/bin/rmblastn -help
-
-## Untar and have just for the fun of it (and to use with maker).
-tar -zxvf ncbi-blast-2.2.28+-x64-linux.tar.gz
-
-# NOTE: v2.6 failes on Delta during 'make install' with "make[1]: *** [install-toolkit] Error 1"
-# 	It is very likely that this error can be ignored however to be safe I used the original 2.2.28 version
-# 
-# Needs gcc v5.2.0 to work
-wget ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.6.0/ncbi-blast-2.6.0+-src.tar.gz
-wget http://www.repeatmasker.org/isb-2.6.0+-changes-vers2.patch.gz
-
-tar -zxvf ncbi-blast-2.6.0+-src.tar.gz
-gunzip isb-2.6.0+-changes-vers2.patch.gz
-
-mv ncbi-blast-2.6.0+-src ncbi-rmblast-2.6.0+-src
-cd ncbi-rmblast-2.6.0+-src
-patch -p1 < ../isb-2.6.0+-changes-vers2.patch
-
-cd c++/
-module load gcc/5.2.0
-module load boost/1.58.0
-./configure --with-mt --prefix=$PWD/.. --without-debug
-make
-make install
 
 
 
