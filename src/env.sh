@@ -30,7 +30,7 @@ export TRANSCRIPTS=
 
 export MAX_INTRON_LENGTH=70000 # maximum size of intron.
 
-# Used for Repeat landscape construction (use contig size not scaffold size)
+# For repeat landscape construction (it is preferable to use the assembly contig total length over scaffold length)
 export GENOME_SIZE=
 
 
