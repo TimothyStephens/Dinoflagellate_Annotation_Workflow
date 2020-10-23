@@ -564,6 +564,7 @@ qsub run_Augustus_Training.sh
 codingseq on
 print_utr on
 
+cd PREDICTION/
 mkdir FASTA_SPLIT
 perl ${SCRIPTS}/fasta-splitter.pl --n-parts 100 --out-dir FASTA_SPLIT ${GENOME_NAME}.softmasked
 ls -1 FASTA_SPLIT/* > files2run.txt
@@ -596,6 +597,8 @@ perl ${SCRIPTS}/GeneStats.pl augustus3.codingseq augustus.cleaned.gff3 ../../$GE
 grep 'ExitStatus' Aug_*.e* | egrep ': [^0]'
 
 ## Clean Up.
+mv augustus* ../
+cd ../
 rm -r PREDICTION/ tmp_opt_*/
 
 
