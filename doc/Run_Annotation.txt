@@ -97,7 +97,7 @@ source env.sh
 
 ## Two files will need to be modified and two files will need to be created.
 
-# The two file need to be placed in your home directory. They are position specific score matrix files which allow exonerate to
+# The two files need to be placed in your home directory. They are position specific score matrix files which allow exonerate to
 # use alternative splice sites. The values in these files should really be generated using evidence based approaches (such as from PASA)
 # however simply using them with place holder values will produce genes with more accurate intron/exon boundaries. 
 
