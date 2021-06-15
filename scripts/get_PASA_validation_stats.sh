@@ -1,5 +1,5 @@
 # This scripts is to get stats about validation of transcripts mapping at PASA step.
-# One the PASA job finished, copy this script to PASA working directory and run:
+# Once the PASA job finished, copy this script to PASA working directory and run:
 # bash get_PASA_validation_stats.sh
 
 NUM_MAPPED_TRAN=$(grep -v "#" alignment.validations.output | cut -f2 |sort|uniq|wc -l)
