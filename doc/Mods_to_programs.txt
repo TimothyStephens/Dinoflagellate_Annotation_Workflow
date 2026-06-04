@@ -222,6 +222,14 @@ static bool dss_ga_allowed;     // allows recognition of GA-AG sites in Dinoflag
 
 ## 7. include/properties.hh - line 32:
 
+
+########
+# Note
+This parameter "NUMPARNAMES" is the total number of parameters in the program. If you are using the latest verson of AUGUSTUS, it may not be 270.
+In this case, you simple need to increase it by 1.
+########
+
+
 ## FROM:
 #define NUMPARNAMES 270
 
